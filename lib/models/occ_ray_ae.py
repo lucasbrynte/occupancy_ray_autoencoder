@@ -3,13 +3,13 @@ Here an outer autoencoder is defined, encoding each of the occlusion rays, regar
 The result is dense latent codes (e.g. on the cylinder / sphere), which in turn will be encoded as a whole by the inner autoencoder.
 """
 
+import torch
 from torch import nn
-import torch.nn.functional.relu as relu
 
 class OccRayEncoder(nn.Module):
     def __init__(
         self,
-        cnn_channel_list = [1, 1024],
+        cnn_channel_list = [2, 1024],
         ksize_list = [45],
         stride_list = [1],
         fc_channel_list = [1024, 1024, 1024, 1024, 1024, 16],
@@ -23,8 +23,8 @@ class OccRayEncoder(nn.Module):
 
         # CNN
         self.conv_layers = nn.ModuleList()
-        for in_ch, out_ch, stride in zip(cnn_channel_list[:-1], cnn_channel_list[1:], stride_list):
-            self.conv_layers.append(nn.Conv1d(in_ch, out_ch, 3, stride=stride, padding=0))
+        for in_ch, out_ch, ksize, stride in zip(cnn_channel_list[:-1], cnn_channel_list[1:], ksize_list, stride_list):
+            self.conv_layers.append(nn.Conv1d(in_ch, out_ch, ksize, stride=stride, padding=0))
 
         # FC head
         self.fc_layers = nn.ModuleList()
@@ -38,15 +38,15 @@ class OccRayEncoder(nn.Module):
         # CNN
         for conv in self.conv_layers:
             x = conv(x)
-            x = relu(x)
-        assert x.shape[2] == 1, 'The CNN part has not managed to reduce the spatial dimension to 1 pixel, as was expected.'
+            x = nn.functional.relu(x)
+        assert x.shape[2] == 1, 'The CNN part has not managed to reduce the spatial dimension to 1 pixel, as was expected. Shape: {}'.format(x.shape)
 
         # FC head
         x = x.squeeze(2) # Squeeze spatial dimension
         for j, layer in enumerate(self.fc_layers):
             x = layer(x)
             if j + 1 < len(self.fc_layers):
-                x = relu(x)
+                x = nn.functional.relu(x)
 
         return x
 
@@ -68,6 +68,6 @@ class OccRayDecoder(nn.Module):
         for j, layer in enumerate(self.fc_layers):
             x = layer(x)
             if j + 1 < len(self.fc_layers):
-                x = relu(x)
+                x = nn.functional.relu(x)
 
         return x
