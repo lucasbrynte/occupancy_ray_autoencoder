@@ -93,10 +93,12 @@ class CylEncoder(torch.nn.Module):
         # fully connected layer to obtain parameters
         # number of parameters
         self.K= sample_structure[-1][0]*sample_structure[-1][1]
+        self.nbr_channels = layer_structure[-1]
         
         # for means
-        self.fc_mu = torch.nn.Linear(layer_structure[-1]*self.K, self.K)
-        self.fc_protocov = torch.nn.Linear(layer_structure[-1]*self.K, self.K**2)
+        self.fc_mu = torch.nn.Linear(layer_structure[-1]*self.K, layer_structure[-1]*self.K)
+        # for covariance_matrices
+        self.fc_protocov = torch.nn.Linear(layer_structure[-1]*self.K, layer_structure[-1]*self.K**2)
         
     def forward(self,x):
         
@@ -107,9 +109,10 @@ class CylEncoder(torch.nn.Module):
         mu = self.fc_mu(x.reshape([x.size()[0],-1]))
         A = self.fc_protocov(x.reshape([x.size()[0],-1]))
         
-        A = A.reshape([-1,self.K,self.K])
+        mu = mu.reshape([-1,self.nbr_channels,self.K])
+        A = A.reshape([-1,self.nbr_channels,self.K,self.K])
         
-        return mu, A@A.transpose(1,2) # parameters for a multinomial distribution
+        return mu, A@A.transpose(2,3) # parameters for a multinomial distribution
     
     
 """
@@ -158,7 +161,7 @@ class CylVAE(torch.nn.Module):
         
         # sample distribution to get codeword 
         
-        z = q.rsample([self.latent_channel_dimension])
+        z = q.rsample()
         z = z.reshape([-1,self.latent_channel_dimension,
                        self.latent_spatial_dimension[0],self.latent_spatial_dimension[1]])
         

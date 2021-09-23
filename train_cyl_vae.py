@@ -7,6 +7,8 @@ from torchvision import datasets,transforms
 
 import os
 
+import matplotlib.pyplot as plt
+
 
 def train_net(config):
     
@@ -17,36 +19,39 @@ def train_net(config):
     #VAE.to('cuda')
     
     training_data = datasets.MNIST(
-    root=os.path.join(os.getcwd(),"datasets/data_MNIST"),
+    root=os.path.join(os.getcwd(),"lib/datasets/data_MNIST"),
     train=True,
     download=False,
     transform=transforms.Compose((transforms.ToTensor(),transforms.Normalize(0, 1)))
     
     )
     
-    batch_size=32
+    batch_size=128
     trainloader= torch.utils.data.DataLoader(training_data, batch_size=batch_size)
 
     opt = torch.optim.Adam(VAE.parameters())
     
     rec_loss = torch.nn.MSELoss()
-
-    for img, _ in trainloader:
-        q,gen = VAE(img)
+    
+    for l in range(config["nbr_epochs"]):
+        for k,batch  in enumerate(trainloader):
+            img, _ = batch
+            q,gen = VAE(img)
         
-        lossKL = kl_divergence(prior,q)
+            lossKL = kl_divergence(prior,q)
         
-        lossrec = rec_loss(img,gen)
+            lossrec = rec_loss(img,gen)
         
-        loss=lossKL.mean()+lossrec
+            loss=lossKL.mean()+lossrec
         
-        loss.backward()
+            loss.backward()
         
-        opt.step()
+            opt.step()
         
-        opt.zero_grad()
+            opt.zero_grad()
         
-        print(loss)
+        
+        
     
     
     
@@ -55,10 +60,11 @@ def train_net(config):
 
 def main():
     
-    config={"layer_structure": [1,4,8,32,64] ,
+    config={"layer_structure": [1,32,128,32,8] ,
             "sample_structure":[(28,28),(14,14),(7,7),(5,5),(2,2)] , 
             "kernel_size": 2,
-            "prior": MultivariateNormal(torch.zeros(4),torch.eye(4))
+            "prior": MultivariateNormal(torch.zeros(4),torch.eye(4)),
+            "nbr_epochs":10
             }
     
     train_net(config)
