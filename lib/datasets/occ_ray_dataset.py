@@ -1,11 +1,13 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from lib.config.config import config
 
 class OccRayDataset(Dataset):
     def __init__(self, range=1, resolution=64, len=1024, n_occ_fcn_samples=4):
         super().__init__()
         self._range = range
+        config.RAY_RANGE = self._range
         self._resolution = resolution
         self._len = len
         self._n_occ_fcn_samples = n_occ_fcn_samples
@@ -23,9 +25,9 @@ class OccRayDataset(Dataset):
         generation_parameters = {}
         generation_parameters['prob_center_occluded'] = 0.75
         generation_parameters['alpha_start'] = 1
-        generation_parameters['beta_start'] = 0.1
+        generation_parameters['beta_start'] = 1/0.1
         generation_parameters['alpha_stop'] = 1
-        generation_parameters['beta_stop'] = 0.05
+        generation_parameters['beta_stop'] = 1/0.05
         return generation_parameters
 
     def __len__(self):
