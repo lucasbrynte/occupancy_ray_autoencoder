@@ -6,8 +6,14 @@ In our case, the cylindrical input signal consists of dense latent codes of the 
 
 import torch
 
+from torch.distributions.multivariate_normal import MultivariateNormal
 
 
+"""
+     class CylinderNet
+     
+     This is just a CNN defined on a cylinder.
+"""
 
 class CylinderNet(torch.nn.Module):
     
@@ -33,14 +39,16 @@ class CylinderNet(torch.nn.Module):
         
         # we want to apply the last layer outside of a loop, therefore define it separately
         self.lastlayer = torch.nn.Conv2d(layer_structure[-2],layer_structure[-1],kernel_size=kernel_size,
-                               padding = (0,kernel_size-1), padding_mode = 'circular')
+                               padding = (0,kernel_size-1), padding_mode = 'circular',bias=False)
         
         # using convenience function from pytorch for downsampling, uses bilinear interpolation
         self.samplers = torch.nn.ModuleList(
             torch.nn.AdaptiveAvgPool2d(sample_structure[k])
             for k in range(len(sample_structure)))
         
-        self.ReLU=torch.nn.ReLU()
+        
+        #leaky ReLU to avoid dead neurons
+        self.ReLU=torch.nn.LeakyReLU()
         
         
         
@@ -59,5 +67,108 @@ class CylinderNet(torch.nn.Module):
         
         return x
     
+    
+"""
+    class CylEncoder
+    
+    This net has a CylNet backbone and a final fully connected layer
+    
+    If the final layer of the CylNet has a spatial dimension k x l,
+    the fully connected layer outputs parameters for a multivariate Gaussian
+    on R^{k*l}
+"""
+    
+class CylEncoder(torch.nn.Module):
+    
+    #cylindrical variational autoencoder
+    
+    def __init__(self, layer_structure,sample_structure,kernel_size):
+        
+        super(CylEncoder,self).__init__()
+        
+        # cylindernet to process the input
+        
+        self.CylNet = CylinderNet(layer_structure,sample_structure,kernel_size)
+        
+        # fully connected layer to obtain parameters
+        # number of parameters
+        self.K= sample_structure[-1][0]*sample_structure[-1][1]
+        
+        # for means
+        self.fc_mu = torch.nn.Linear(layer_structure[-1]*self.K, self.K)
+        self.fc_protocov = torch.nn.Linear(layer_structure[-1]*self.K, self.K**2)
+        
+    def forward(self,x):
+        
+        # process on cylinder
+        x = self.CylNet(x)
+        
+        # get parameters for probability distribution
+        mu = self.fc_mu(x.reshape([x.size()[0],-1]))
+        A = self.fc_protocov(x.reshape([x.size()[0],-1]))
+        
+        A = A.reshape([-1,self.K,self.K])
+        
+        return mu, A@A.transpose(1,2) # parameters for a multinomial distribution
+    
+    
+"""
+ class CylVAE
+
+    A cylindrical autoencoder.
+    
+    self.Encoder is a CylEncoder
+    self.Decoder is a CylNet
+    
+    Calling forward generates a probability distribution (for generating codewords)
+    and one decoded sample
+"""
 
 
+class CylVAE(torch.nn.Module):
+    
+
+     def __init__(self, layer_structure,sample_structure,kernel_size):
+        
+        super(CylVAE,self).__init__()
+        
+        # Encoder
+        
+        self.Encoder = CylEncoder(layer_structure,sample_structure[1:],kernel_size)
+        
+        #
+        self.latent_channel_dimension = layer_structure[-1]
+        self.latent_spatial_dimension = sample_structure[-1]
+        
+        # Decoder
+        
+        layer_structure.reverse()
+        sample_structure.reverse()
+        self.Decoder = CylinderNet(layer_structure, sample_structure[1:],kernel_size)
+        
+     def forward(self,x):
+        
+        #  get parameters from encoder
+        
+        mu,Sigma = self.Encoder(x)
+        
+        # define  distribution
+        
+        q=MultivariateNormal(mu,Sigma)
+        
+        # sample distribution to get codeword 
+        
+        z = q.rsample([self.latent_channel_dimension])
+        z = z.reshape([-1,self.latent_channel_dimension,
+                       self.latent_spatial_dimension[0],self.latent_spatial_dimension[1]])
+        
+        # process on cylinder
+        
+        gen = self.Decoder(z)
+        return  (q,gen)
+    
+
+
+    
+
+    
