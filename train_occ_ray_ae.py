@@ -7,18 +7,21 @@ from torch.utils.data import DataLoader
 
 from lib.config.config import config
 from lib.logging.logging import log
-from lib.logging.tb import get_tb_writer, initialize_tensorboard
+from lib.logging.tb import initialize_tensorboard
+from lib.logging.signal_manager import SignalManager
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
-from lib.visualization.visualization import visualize_train_batch
 
 
 
 def main():
+    assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
     if os.path.exists(config.EXP_PATH):
         shutil.rmtree(config.EXP_PATH)
+
     initialize_tensorboard()
-    tb_writer = get_tb_writer()
+
+    signal_manager = SignalManager()
 
     train_dataset = OccRayDataset(
         range = 1,
@@ -73,12 +76,18 @@ def main():
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            if is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0):
-                log.info('Train loss: {:.8f}'.format(loss.item()))
-                tb_writer.add_scalar("loss/train", loss, global_batch_cnt)
-                # tb_writer.flush()
-            if is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0):
-                visualize_train_batch('figures/prediction/train', global_batch_cnt, batch['occ_ray_rasterized'][0].detach().cpu().numpy(), batch['radial_samples'][0].detach().cpu().numpy(), occ_fcn_vals_pred[0].detach().cpu().numpy(), occ_fcn_vals_target[0].detach().cpu().numpy())
+            signal_manager.record_train_batch(
+                {
+                    'occ_ray_rasterized': batch['occ_ray_rasterized'].detach().cpu().numpy(),
+                    'radial_samples': batch['radial_samples'].detach().cpu().numpy(),
+                    'occ_fcn_vals_pred': occ_fcn_vals_pred.detach().cpu().numpy(),
+                    'occ_fcn_vals_target': occ_fcn_vals_target.detach().cpu().numpy(),
+                    'loss': loss.detach().cpu().numpy(),
+                },
+                log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
+                log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
+                visualize_pred = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0),
+            )
             global_batch_cnt += 1
 
 if __name__ == '__main__':
