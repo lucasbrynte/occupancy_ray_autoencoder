@@ -78,10 +78,10 @@ def main():
             optimizer.zero_grad()
             signal_manager.record_train_batch(
                 {
-                    'occ_ray_rasterized': batch['occ_ray_rasterized'].detach().cpu().numpy(),
-                    'radial_samples': batch['radial_samples'].detach().cpu().numpy(),
+                    'occ_ray_rasterized': batch['occ_ray_rasterized'].numpy(),
+                    'radial_samples': batch['radial_samples'].numpy(),
                     'occ_fcn_vals_pred': occ_fcn_vals_pred.detach().cpu().numpy(),
-                    'occ_fcn_vals_target': occ_fcn_vals_target.detach().cpu().numpy(),
+                    'occ_fcn_vals_target': batch['occ_fcn_vals_target'].numpy(),
                     'loss': loss.detach().cpu().numpy(),
                 },
                 log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
