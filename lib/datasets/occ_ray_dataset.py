@@ -55,11 +55,13 @@ class OccRayDataset(Dataset):
         occ_ray_rasterized = np.zeros((self._resolution), dtype=np.bool)
         if center_occluded:
             occ_ray_rasterized = ~occ_ray_rasterized
-        for loc in locs:
+        for j, loc in enumerate(locs):
             if loc >= self._resolution:
+                n_locs = j
                 break
             occ_ray_rasterized[loc:] = ~occ_ray_rasterized[loc:]
-        return occ_ray_rasterized
+        locs = locs[:j]
+        return occ_ray_rasterized, locs
 
     def generate_occ_fcn_samples_along_ray(self, occ_ray_rasterized):
         eps = 1e-6
@@ -68,13 +70,14 @@ class OccRayDataset(Dataset):
         return radial_samples, occ_fcn_vals
 
     def __getitem__(self, sample_idx):
-        occ_ray_rasterized = self.sample_rasterized_occl_ray()
+        occ_ray_rasterized, surface_pts = self.sample_rasterized_occl_ray()
         first_gridpoint = 0.5 * self._range / self._resolution
         last_gridpoint = (self._resolution - 0.5) * self._range / self._resolution
         grid = np.linspace(first_gridpoint, last_gridpoint, self._resolution)
         radial_samples, occ_fcn_vals = self.generate_occ_fcn_samples_along_ray(occ_ray_rasterized)
         sample = {
             'occ_ray_rasterized': torch.tensor(occ_ray_rasterized.astype(np.float32)),
+            'surface_pts': torch.tensor(surface_pts.astype(np.float32)),
             'radial_samples': torch.tensor(radial_samples.astype(np.float32)),
             'occ_fcn_vals': torch.tensor(occ_fcn_vals.astype(np.float32)),
             'grid': torch.tensor(grid.astype(np.float32)),
