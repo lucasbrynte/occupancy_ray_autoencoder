@@ -19,9 +19,13 @@ class SignalManager():
     ):
         metrics = self._calculate_metrics(batch_data)
         if log_signals:
-            log.info('[TRAIN] loss: {:.8f}'.format(metrics['loss']))
+            log.info('[TRAIN] ' + ','.join([
+                'loss: {:.8f}'.format(metrics['loss']),
+                'acc: {:.2f}%'.format(100*metrics['accuracy']),
+            ]))
         if log_signals_tb:
             self._tb_writer.add_scalar("loss/train", metrics['loss'], self._global_batch_cnt)
+            self._tb_writer.add_scalar("accuracy/train", metrics['accuracy'], self._global_batch_cnt)
             # self._tb_writer.flush()
         if visualize_pred:
             visualize_train_batch(
@@ -37,5 +41,13 @@ class SignalManager():
     def _calculate_metrics(self, batch_data):
         metrics = {
             'loss': batch_data['loss'],
+            'accuracy': self._calculate_accuracy(batch_data),
         }
         return metrics
+
+
+    def _calculate_accuracy(self, batch_data):
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        hard_predictions = batch_data['occ_fcn_vals_pred'] >= 0.5
+        accuracy = np.mean(hard_predictions == batch_data['occ_fcn_vals_target'].astype(bool))
+        return accuracy
