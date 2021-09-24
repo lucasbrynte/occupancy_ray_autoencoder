@@ -63,7 +63,7 @@ def main():
                 batch['radial_samples'].reshape((config.OCC_RAY_AE.BS*config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, 1)).cuda(),
             ).reshape((config.OCC_RAY_AE.BS, config.OCC_RAY_AE.N_OCC_FCN_SAMPLES))
             occ_fcn_vals_target = batch['occ_fcn_vals'].cuda()
-            loss = nn.functional.mse_loss(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='mean') / config.RAY_RANGE**2
+            loss = nn.functional.mse_loss(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='mean')
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
