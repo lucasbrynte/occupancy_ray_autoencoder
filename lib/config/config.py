@@ -3,15 +3,15 @@ import argparse
 from attrdict import AttrDict
 
 parser = argparse.ArgumentParser(description = '')
-parser.add_argument('--exp-root', help='Root path in which to experiments.', default='out')
-parser.add_argument('--exp-name', help='Experiment name.', required=True)
+parser.add_argument('--exp-root', dest='EXP_ROOT', help='Root path in which to experiments.', default='out')
+parser.add_argument('--exp-name', dest='EXP_NAME', help='Experiment name.', required=True)
 args = parser.parse_args()
 
 config = AttrDict()
-config.exp_root = args.exp_root
-config.exp_name = args.exp_name
-config.exp_path = os.path.join(config.exp_root, config.exp_name)
-config.tb_path = os.path.join(config.exp_path, 'tb')
+config.EXP_ROOT = args.EXP_ROOT
+config.EXP_NAME = args.EXP_NAME
+config.EXP_PATH = os.path.join(config.EXP_ROOT, config.EXP_NAME)
+config.TB_PATH = os.path.join(config.EXP_PATH, 'tb')
 
 config.BS = 16
 config.LR = 1e-4

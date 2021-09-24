@@ -15,8 +15,8 @@ from lib.visualization.visualization import visualize_train_batch
 
 
 def main():
-    if os.path.exists(config.exp_path):
-        shutil.rmtree(config.exp_path)
+    if os.path.exists(config.EXP_PATH):
+        shutil.rmtree(config.EXP_PATH)
     initialize_tensorboard()
     tb_writer = get_tb_writer()
 
