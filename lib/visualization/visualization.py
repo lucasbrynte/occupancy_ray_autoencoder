@@ -23,7 +23,7 @@ def prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, oc
     ax.plot(radial_samples*config.RAY_RANGE/config.OCC_RAY_RESOLUTION, occ_fcn_vals_pred, 'bx')
     return fig
 
-def visualize_train_batch(step, occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target, write_tb=True):
+def visualize_train_batch(tag, step, occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target, write_tb=True):
     fig = prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target)
     if write_tb:
-        get_tb_writer().add_figure('figures/prediction/train', fig, global_step=step)
+        get_tb_writer().add_figure(tag, fig, global_step=step)

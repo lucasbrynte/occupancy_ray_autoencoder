@@ -13,4 +13,5 @@ def initialize_tensorboard():
     return _tb_writer
 
 def get_tb_writer():
+    assert _tb_writer is not None, 'Before calling get_tb_writer() for the first time, initialize_tensorboard() must have been called.'
     return _tb_writer

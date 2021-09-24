@@ -72,7 +72,7 @@ def main():
                 tb_writer.add_scalar("loss/train", loss, global_batch_cnt)
                 # tb_writer.flush()
             if is_last_batch or (config.N_BATCHES_VIZ_INTERVAL is not None and global_batch_cnt % config.N_BATCHES_VIZ_INTERVAL == 0):
-                visualize_train_batch(global_batch_cnt, batch['occ_ray_rasterized'][0].detach().cpu().numpy(), batch['radial_samples'][0].detach().cpu().numpy(), occ_fcn_vals_pred[0].detach().cpu().numpy(), occ_fcn_vals_target[0].detach().cpu().numpy())
+                visualize_train_batch('figures/prediction/train', global_batch_cnt, batch['occ_ray_rasterized'][0].detach().cpu().numpy(), batch['radial_samples'][0].detach().cpu().numpy(), occ_fcn_vals_pred[0].detach().cpu().numpy(), occ_fcn_vals_target[0].detach().cpu().numpy())
             global_batch_cnt += 1
 
 if __name__ == '__main__':
