@@ -24,10 +24,9 @@ def main():
     signal_manager = SignalManager()
 
     train_dataset = OccRayDataset(
-        range = 1,
-        resolution = config.OCC_RAY_AE.OCC_RAY_RESOLUTION,
-        # len = 1024,#*16
-        len = 1024*64,
+        # 1024,#*16
+        1024*64,
+        config.OCC_RAY_AE.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
     )
     train_dataloader = DataLoader(
         train_dataset,
