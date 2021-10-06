@@ -26,7 +26,8 @@ def main():
     train_dataset = OccRayDataset(
         range = 1,
         resolution = config.OCC_RAY_AE.OCC_RAY_RESOLUTION,
-        len = 1024,#*16
+        # len = 1024,#*16
+        len = 1024*64,
     )
     train_dataloader = DataLoader(
         train_dataset,
