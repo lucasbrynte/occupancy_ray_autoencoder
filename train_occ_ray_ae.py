@@ -55,7 +55,6 @@ def main():
         {'name': 'occ_ray_decoder', 'params': occ_ray_decoder.parameters()},
     ], lr = config.OCC_RAY_AE.LR)
 
-    global_batch_cnt = 0
     for epoch in range(config.OCC_RAY_AE.N_EPOCHS):
         for batch_idx, batch_data in enumerate(tqdm(train_dataloader, 'Epoch #{}/{}'.format(epoch+1, config.OCC_RAY_AE.N_EPOCHS))):
             is_last_batch = not (batch_idx+1) < len(train_dataloader)
@@ -83,11 +82,10 @@ def main():
                     'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
                     'loss': loss.detach().cpu().numpy(),
                 },
-                log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
-                log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
-                visualize_pred = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and global_batch_cnt % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0),
+                log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
+                log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
+                visualize_pred = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0),
             )
-            global_batch_cnt += 1
 
 def preprocess_batch(batch_data):
     assert torch.all(batch_data['anywhere_pt_weights'] > 0) # Simplifies things if only surface points are variable-length
