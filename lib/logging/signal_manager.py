@@ -3,7 +3,7 @@ import numpy as np
 from lib.config.config import config
 from lib.logging.logging import log
 from lib.logging.tb import get_tb_writer
-from lib.visualization.visualization import visualize_train_batch
+from lib.visualization.visualization import visualize_prediction
 
 class SignalManager():
     def __init__(self):
@@ -36,7 +36,7 @@ class SignalManager():
             self._tb_writer.add_scalar("std_abs_err_surface/train", metrics['std_abs_err_surface'], self._global_batch_cnt)
             # self._tb_writer.flush()
         if visualize_pred:
-            visualize_train_batch(
+            visualize_prediction(
                 'figures/prediction/train',
                 self._global_batch_cnt,
                 batch_data['occ_ray_rasterized'][0],
