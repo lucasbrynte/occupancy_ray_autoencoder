@@ -57,7 +57,7 @@ def main():
 
     global_batch_cnt = 0
     for epoch in range(config.OCC_RAY_AE.N_EPOCHS):
-        for batch_idx, batch in tqdm(enumerate(train_dataloader), 'Epoch #{}/{}'.format(epoch+1, config.OCC_RAY_AE.N_EPOCHS)):
+        for batch_idx, batch_data in enumerate(tqdm(train_dataloader, 'Epoch #{}/{}'.format(epoch+1, config.OCC_RAY_AE.N_EPOCHS))):
             is_last_batch = not (batch_idx+1) < len(train_dataloader)
             batch_data = preprocess_batch(batch_data)
             batch_forward_out = batch_forward(
