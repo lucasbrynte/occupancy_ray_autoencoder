@@ -44,6 +44,7 @@ def main():
     val_dataloader = DataLoader(
         val_dataset,
         batch_size = config.OCC_RAY_AE.BS,
+        shuffle = True,
         pin_memory = True,
         drop_last = False,
     )
@@ -142,7 +143,7 @@ def validate(
                 'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
                 'loss': loss.detach().cpu().numpy(),
             },
-            visualize_pred = True,
+            visualize_pred = batch_idx == 0,
         )
     signal_manager.calc_avg_val_metrics(
         log_signals = True,
