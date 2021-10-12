@@ -12,6 +12,7 @@ config.EXP_ROOT = args.EXP_ROOT
 config.EXP_NAME = args.EXP_NAME
 config.EXP_PATH = os.path.join(config.EXP_ROOT, config.EXP_NAME)
 config.TB_PATH = os.path.join(config.EXP_PATH, 'tb')
+config.CHECKPOINT_PATH = os.path.join(config.EXP_PATH, 'checkpoints')
 
 config.OCC_RAY_AE = {}
 config.OCC_RAY_AE.TRAIN = {}
@@ -20,6 +21,7 @@ config.OCC_RAY_AE.BS = 16
 config.OCC_RAY_AE.LR = 1e-4
 # config.OCC_RAY_AE.N_EPOCHS = 100000
 config.OCC_RAY_AE.N_EPOCHS = 15000
+config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL = 500
 config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL = None # Just every epoch
 # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = None
 config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 256

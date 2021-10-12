@@ -9,6 +9,7 @@ from lib.config.config import config
 from lib.logging.logging import log
 from lib.logging.tb import initialize_tensorboard
 from lib.logging.signal_manager import SignalManager
+from lib.logging.checkpoint import save_checkpoint, load_checkpoint
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 
@@ -18,6 +19,9 @@ def main():
     assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
     if os.path.exists(config.EXP_PATH):
         shutil.rmtree(config.EXP_PATH)
+    os.makedirs(config.TB_PATH, exist_ok=True)
+    os.makedirs(config.CHECKPOINT_PATH, exist_ok=True)
+    os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
 
     initialize_tensorboard()
 
@@ -113,6 +117,15 @@ def main():
                 occ_ray_encoder,
                 occ_ray_decoder,
                 signal_manager,
+            )
+        if epoch % config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL == 0:
+            save_checkpoint(
+                os.path.join(config.CHECKPOINT_PATH, 'epoch_{:08d}'.format(epoch+1)),
+                epoch+1,
+                (epoch+1) * len(train_dataset),
+                occ_ray_encoder,
+                occ_ray_decoder,
+                optimizer,
             )
 
 def validate(
