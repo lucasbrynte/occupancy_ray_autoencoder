@@ -22,7 +22,7 @@ class SignalManager():
     ):
         metrics = self._calculate_metrics(batch_data)
         if log_signals:
-            log.info('[TRAIN] ' + ','.join([
+            log().info('[TRAIN] ' + ','.join([
                 'loss: {:.8f}'.format(metrics['loss']),
                 'acc: {:.2f}%'.format(100*metrics['acc']),
                 'mean_abs_err_anywhere: {:.4f}'.format(metrics['mean_abs_err_anywhere']),
@@ -100,7 +100,7 @@ class SignalManager():
             'std_abs_err_surface': np.mean([ metrics['std_abs_err_surface'] for metrics in self._val_metrics ]),
         }
         if log_signals:
-            log.info('[VAL] ' + ','.join([
+            log().info('[VAL] ' + ','.join([
                 'loss: {:.8f}'.format(avg_metrics['loss']),
                 'acc: {:.2f}%'.format(100*avg_metrics['acc']),
                 'mean_abs_err_anywhere: {:.4f}'.format(avg_metrics['mean_abs_err_anywhere']),

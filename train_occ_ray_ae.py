@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 
 from lib.config.config import config
 from lib.logging.logging import log
-from lib.logging.tb import initialize_tensorboard
 from lib.logging.signal_manager import SignalManager
 from lib.logging.checkpoint import save_checkpoint, load_checkpoint
 from lib.logging.version_dump import version_dump
@@ -25,8 +24,6 @@ def main():
     os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
 
     version_dump()
-
-    initialize_tensorboard()
 
     signal_manager = SignalManager()
 
