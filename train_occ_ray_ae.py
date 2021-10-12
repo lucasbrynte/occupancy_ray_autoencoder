@@ -10,6 +10,7 @@ from lib.logging.logging import log
 from lib.logging.tb import initialize_tensorboard
 from lib.logging.signal_manager import SignalManager
 from lib.logging.checkpoint import save_checkpoint, load_checkpoint
+from lib.logging.version_dump import version_dump
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 
@@ -22,6 +23,8 @@ def main():
     os.makedirs(config.TB_PATH, exist_ok=True)
     os.makedirs(config.CHECKPOINT_PATH, exist_ok=True)
     os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
+
+    version_dump()
 
     initialize_tensorboard()
 
