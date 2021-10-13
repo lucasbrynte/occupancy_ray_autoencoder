@@ -31,12 +31,12 @@ class SignalManager():
                 'std_abs_err_surface: {:.4f}'.format(metrics['std_abs_err_surface']),
             ]))
         if log_signals_tb:
-            self._tb_writer.add_scalar("loss/train", metrics['loss'], self._global_train_batch_cnt)
-            self._tb_writer.add_scalar("acc/train", metrics['acc'], self._global_train_batch_cnt)
-            self._tb_writer.add_scalar("mean_abs_err_anywhere/train", metrics['mean_abs_err_anywhere'], self._global_train_batch_cnt)
-            self._tb_writer.add_scalar("mean_abs_err_surface/train", metrics['mean_abs_err_surface'], self._global_train_batch_cnt)
-            self._tb_writer.add_scalar("std_abs_err_anywhere/train", metrics['std_abs_err_anywhere'], self._global_train_batch_cnt)
-            self._tb_writer.add_scalar("std_abs_err_surface/train", metrics['std_abs_err_surface'], self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("loss/train", metrics['loss'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("acc/train", metrics['acc'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("mean_abs_err_anywhere/train", metrics['mean_abs_err_anywhere'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("mean_abs_err_surface/train", metrics['mean_abs_err_surface'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("std_abs_err_anywhere/train", metrics['std_abs_err_anywhere'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("std_abs_err_surface/train", metrics['std_abs_err_surface'], global_step=self._global_train_batch_cnt)
             # self._tb_writer.flush()
         if visualize_pred:
             visualize_prediction(
