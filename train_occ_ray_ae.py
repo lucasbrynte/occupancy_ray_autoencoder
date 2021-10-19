@@ -217,6 +217,3 @@ def calc_loss(batch_data, batch_forward_out):
     else:
         assert False
     return loss
-
-if __name__ == '__main__':
-    main()
