@@ -11,12 +11,12 @@ import train_occ_ray_ae
 def cli(**kwargs):
     config.EXP_ROOT = kwargs['exp_root']
     config.EXP_NAME = kwargs['exp_name']
-    config.EXP_PATH = os.path.join(config.EXP_ROOT, config.EXP_NAME)
-    config.CONFIG_PATH = os.path.join(config.EXP_PATH, 'config.json')
-    config.LOG_PATH = os.path.join(config.EXP_PATH, 'LOG')
-    config.TB_PATH = os.path.join(config.EXP_PATH, 'tb')
-    config.CHECKPOINT_PATH = os.path.join(config.EXP_PATH, 'checkpoints')
-    config.VERSION_DUMP_PATH = os.path.join(config.EXP_PATH, 'version_dump')
+    config.EXP_DIR = os.path.join(config.EXP_ROOT, config.EXP_NAME)
+    config.CONFIG_PATH = os.path.join(config.EXP_DIR, 'config.json')
+    config.LOG_PATH = os.path.join(config.EXP_DIR, 'LOG')
+    config.TB_DIR = os.path.join(config.EXP_DIR, 'tb')
+    config.CHECKPOINT_DIR = os.path.join(config.EXP_DIR, 'checkpoints')
+    config.VERSION_DUMP_DIR = os.path.join(config.EXP_DIR, 'version_dump')
 
 @cli.group()
 def occ_ray_ae(**kwargs):

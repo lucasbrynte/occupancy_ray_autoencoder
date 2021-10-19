@@ -3,14 +3,14 @@ import subprocess
 from lib.config.config import config
 
 def version_dump():
-    os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
+    os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
 
-    diff_path = os.path.join(config.VERSION_DUMP_PATH, 'DIFF')
-    tracked_list = os.path.join(config.VERSION_DUMP_PATH, 'TRACKED')
-    head_hash_path = os.path.join(config.VERSION_DUMP_PATH, 'HEAD_HASH')
-    stash_hash_path = os.path.join(config.VERSION_DUMP_PATH, 'STASH_W_MODIFIED_HASH')
-    zip_tracked = os.path.join(config.VERSION_DUMP_PATH, 'tracked.zip')
-    zip_untracked = os.path.join(config.VERSION_DUMP_PATH, 'untracked.zip')
+    diff_path = os.path.join(config.VERSION_DUMP_DIR, 'DIFF')
+    tracked_list = os.path.join(config.VERSION_DUMP_DIR, 'TRACKED')
+    head_hash_path = os.path.join(config.VERSION_DUMP_DIR, 'HEAD_HASH')
+    stash_hash_path = os.path.join(config.VERSION_DUMP_DIR, 'STASH_W_MODIFIED_HASH')
+    zip_tracked = os.path.join(config.VERSION_DUMP_DIR, 'tracked.zip')
+    zip_untracked = os.path.join(config.VERSION_DUMP_DIR, 'untracked.zip')
 
     # Determine hash of HEAD
     cmd = ['git', 'rev-list', '-n1', 'HEAD']

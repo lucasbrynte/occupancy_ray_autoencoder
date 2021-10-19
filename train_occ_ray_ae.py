@@ -18,13 +18,13 @@ from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 
 def main():
     assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
-    if os.path.exists(config.EXP_PATH):
-        shutil.rmtree(config.EXP_PATH)
-    os.makedirs(config.TB_PATH, exist_ok=True)
-    os.makedirs(config.CHECKPOINT_PATH, exist_ok=True)
-    os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
+    if os.path.exists(config.EXP_DIR):
+        shutil.rmtree(config.EXP_DIR)
+    os.makedirs(config.TB_DIR, exist_ok=True)
+    os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
 
-    with open(os.path.join(config.EXP_PATH, 'config.json'), 'w') as f:
+    with open(os.path.join(config.EXP_DIR, 'config.json'), 'w') as f:
         json.dump(config, f, indent=2)
     version_dump()
 
@@ -123,7 +123,7 @@ def main():
             )
         if epoch % config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL == 0:
             save_checkpoint(
-                os.path.join(config.CHECKPOINT_PATH, 'epoch_{:08d}'.format(epoch+1)),
+                os.path.join(config.CHECKPOINT_DIR, 'epoch_{:08d}'.format(epoch+1)),
                 epoch+1,
                 (epoch+1) * len(train_dataset),
                 occ_ray_encoder,

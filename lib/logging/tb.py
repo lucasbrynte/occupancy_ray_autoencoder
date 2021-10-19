@@ -7,7 +7,7 @@ _tb_writer = None
 def _initialize_tensorboard():
     global _tb_writer
     _tb_writer = SummaryWriter(
-        log_dir = config.TB_PATH,
+        log_dir = config.TB_DIR,
         flush_secs = 30,
     )
     return _tb_writer
