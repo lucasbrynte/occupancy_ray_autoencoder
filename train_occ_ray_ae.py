@@ -96,6 +96,7 @@ def main():
                     # 'anywhere_pt_mask': anywhere_pt_mask.numpy(),
                     'surface_pts': batch_data['surface_pts'].numpy(),
                     'surface_pt_mask': batch_data['surface_pt_mask'].numpy(),
+                    'z': batch_forward_out['z'].detach().cpu().numpy(),
                     'anywhere_occ_fcn_vals_pred': batch_forward_out['anywhere_occ_fcn_vals_pred'].detach().cpu().numpy(),
                     'surface_occ_fcn_vals_pred': batch_forward_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
                     'anywhere_occ_fcn_vals_target': batch_data['anywhere_occ_fcn_vals'].numpy(),

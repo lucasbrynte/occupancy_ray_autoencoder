@@ -37,6 +37,13 @@ class SignalManager():
             self._tb_writer.add_scalar("mean_abs_err_surface/train", metrics['mean_abs_err_surface'], global_step=self._global_train_batch_cnt)
             self._tb_writer.add_scalar("std_abs_err_anywhere/train", metrics['std_abs_err_anywhere'], global_step=self._global_train_batch_cnt)
             self._tb_writer.add_scalar("std_abs_err_surface/train", metrics['std_abs_err_surface'], global_step=self._global_train_batch_cnt)
+            BS = batch_data['z'].shape[0]
+            self._tb_writer.add_embedding(
+                batch_data['z'],
+                # label_img = batch_data['occ_ray_rasterized'].reshape((BS, 1, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)), # (N, C, H, W)
+                tag = "z/train",
+                global_step = self._global_train_batch_cnt,
+            )
             # self._tb_writer.flush()
         if visualize_pred:
             visualize_prediction(
