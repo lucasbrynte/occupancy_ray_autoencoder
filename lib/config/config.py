@@ -11,6 +11,7 @@ config = dotsi.Dict()
 config.EXP_ROOT = args.EXP_ROOT
 config.EXP_NAME = args.EXP_NAME
 config.EXP_PATH = os.path.join(config.EXP_ROOT, config.EXP_NAME)
+config.CONFIG_PATH = os.path.join(config.EXP_PATH, 'config.json')
 config.LOG_PATH = os.path.join(config.EXP_PATH, 'LOG')
 config.TB_PATH = os.path.join(config.EXP_PATH, 'tb')
 config.CHECKPOINT_PATH = os.path.join(config.EXP_PATH, 'checkpoints')

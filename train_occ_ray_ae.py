@@ -1,5 +1,6 @@
 import os
 import shutil
+import json
 from tqdm import tqdm
 import torch
 from torch import nn
@@ -23,6 +24,8 @@ def main():
     os.makedirs(config.CHECKPOINT_PATH, exist_ok=True)
     os.makedirs(config.VERSION_DUMP_PATH, exist_ok=True)
 
+    with open(os.path.join(config.EXP_PATH, 'config.json'), 'w') as f:
+        json.dump(config, f, indent=2)
     version_dump()
 
     signal_manager = SignalManager()
