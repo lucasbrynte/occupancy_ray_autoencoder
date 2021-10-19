@@ -190,6 +190,7 @@ def batch_forward(
     anywhere_occ_fcn_vals_pred = occ_fcn_vals_pred[:, :config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES]
     surface_occ_fcn_vals_pred = occ_fcn_vals_pred[:, -config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES:]
     return {
+        'z': z,
         'anywhere_occ_fcn_vals_pred': anywhere_occ_fcn_vals_pred,
         'surface_occ_fcn_vals_pred': surface_occ_fcn_vals_pred,
     }
