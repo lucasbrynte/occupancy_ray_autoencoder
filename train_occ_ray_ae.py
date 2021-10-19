@@ -121,7 +121,7 @@ def main():
                 occ_ray_decoder,
                 signal_manager,
             )
-        if epoch % config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL == 0:
+        if epoch == 0 or (epoch+1) == config.OCC_RAY_AE.N_EPOCHS or (epoch+1) % config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL == 0:
             save_checkpoint(
                 os.path.join(config.CHECKPOINT_DIR, 'epoch_{:08d}'.format(epoch+1)),
                 epoch+1,
