@@ -33,7 +33,7 @@ def main():
     train_dataset = OccRayDataset(
         # 1024,#*16
         1024*64,
-        config.OCC_RAY_AE.TRAIN.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        config.OCC_RAY_AE.TRAIN.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
     )
     train_dataloader = DataLoader(
         train_dataset,
@@ -46,7 +46,7 @@ def main():
         1024,
         # 1024*16,
         # 1024*64,
-        config.OCC_RAY_AE.VAL.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        config.OCC_RAY_AE.VAL.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
     )
     val_dataloader = DataLoader(
         val_dataset,

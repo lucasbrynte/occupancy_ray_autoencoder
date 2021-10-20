@@ -40,14 +40,16 @@ def train():
     config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 256
     # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 1024
     config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL = None # Just every epoch
-    config.OCC_RAY_AE.TRAIN.SYNTH_OCC_RAY_GENERATION_PARAMETERS = {
+    config.OCC_RAY_AE.TRAIN.DATA = {}
+    config.OCC_RAY_AE.VAL.DATA = {}
+    config.OCC_RAY_AE.TRAIN.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS = {
         'prob_center_occluded': 0.75,
         'alpha_start': 1,
         'beta_start': 1/0.1,
         'alpha_stop': 1,
         'beta_stop': 1/0.05,
     }
-    config.OCC_RAY_AE.VAL.SYNTH_OCC_RAY_GENERATION_PARAMETERS = {
+    config.OCC_RAY_AE.VAL.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS = {
         'prob_center_occluded': 0.25,
         'alpha_start': 1,
         'beta_start': 1/0.05,
