@@ -1,4 +1,5 @@
 import os
+import shutil
 import click
 import dotsi
 config = dotsi.Dict()
@@ -18,6 +19,12 @@ def cli(**kwargs):
     config.CHECKPOINT_DIR = os.path.join(config.EXP_DIR, 'checkpoints')
     config.VERSION_DUMP_DIR = os.path.join(config.EXP_DIR, 'version_dump')
 
+    if os.path.exists(config.EXP_DIR):
+        shutil.rmtree(config.EXP_DIR)
+    os.makedirs(config.TB_DIR, exist_ok=True)
+    os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
+
 @cli.group()
 def occ_ray_ae(**kwargs):
     config.OCC_RAY_AE = {}
@@ -36,6 +43,8 @@ def occ_ray_ae(**kwargs):
             'FC_CHANNEL_LIST': [1024, 1024, 1024, 1024],
         },
     }
+
+    assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
 
 @occ_ray_ae.command()
 def train():

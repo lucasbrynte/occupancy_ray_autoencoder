@@ -1,5 +1,4 @@
 import os
-import shutil
 import json
 from tqdm import tqdm
 import torch
@@ -17,13 +16,6 @@ from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 
 
 def main():
-    assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
-    if os.path.exists(config.EXP_DIR):
-        shutil.rmtree(config.EXP_DIR)
-    os.makedirs(config.TB_DIR, exist_ok=True)
-    os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
-    os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
-
     with open(os.path.join(config.EXP_DIR, 'config.json'), 'w') as f:
         json.dump(config, f, indent=2)
     version_dump()
