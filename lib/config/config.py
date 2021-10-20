@@ -25,6 +25,17 @@ def occ_ray_ae(**kwargs):
     config.OCC_RAY_AE.RAY_RANGE = 1
     config.OCC_RAY_AE.OCC_RAY_LATENT_DIM = 16
     config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION = 'occupancy_probability'
+    config.OCC_RAY_AE.ARCH = {
+        'ENCODER': {
+            'CNN_CHANNEL_LIST': [2, 1024],
+            'KSIZE_LIST': [45],
+            'STRIDE_LIST': [1],
+            'FC_CHANNEL_LIST': [1024, 1024, 1024, 1024, 1024],
+        },
+        'DECODER': {
+            'FC_CHANNEL_LIST': [1024, 1024, 1024, 1024],
+        },
+    }
 
 @occ_ray_ae.command()
 def train():

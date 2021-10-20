@@ -54,17 +54,17 @@ def main():
     )
 
     occ_ray_encoder = OccRayEncoder(
-        cnn_channel_list = [2, 1024],
-        ksize_list = [45],
-        stride_list = [1],
-        fc_channel_list = [1024, 1024, 1024, 1024, 1024, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
+        cnn_channel_list = config.OCC_RAY_AE.ARCH.ENCODER.CNN_CHANNEL_LIST,
+        ksize_list = config.OCC_RAY_AE.ARCH.ENCODER.KSIZE_LIST,
+        stride_list = config.OCC_RAY_AE.ARCH.ENCODER.STRIDE_LIST,
+        fc_channel_list = list(config.OCC_RAY_AE.ARCH.ENCODER.FC_CHANNEL_LIST) + [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
         # cnn_channel_list = [2, 16, 32, 64, 128, 256, 512, 1024],
         # ksize_list = [3, 3, 3, 3, 3, 3, 3],
         # stride_list = [1, 2, 1, 2, 1, 2, 1],
         # fc_channel_list = [1024, 1024, 1024, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
     ).cuda()
     occ_ray_decoder = OccRayDecoder(
-        fc_channel_list = [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM+1, 1024, 1024, 1024, 1024, 1],
+        fc_channel_list = [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM+1] + list(config.OCC_RAY_AE.ARCH.DECODER.FC_CHANNEL_LIST) + [1],
     ).cuda()
 
     optimizer = torch.optim.Adam([
