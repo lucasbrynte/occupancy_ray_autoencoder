@@ -31,8 +31,7 @@ def main():
     signal_manager = SignalManager()
 
     train_dataset = OccRayDataset(
-        # 1024,#*16
-        1024*64,
+        config.OCC_RAY_AE.TRAIN.DATA.N_SAMPLES,
         config.OCC_RAY_AE.TRAIN.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
     )
     train_dataloader = DataLoader(
@@ -43,9 +42,7 @@ def main():
         drop_last = False,
     )
     val_dataset = OccRayDataset(
-        1024,
-        # 1024*16,
-        # 1024*64,
+        config.OCC_RAY_AE.VAL.DATA.N_SAMPLES,
         config.OCC_RAY_AE.VAL.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
     )
     val_dataloader = DataLoader(
