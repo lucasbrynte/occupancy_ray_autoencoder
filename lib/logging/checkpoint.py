@@ -1,4 +1,14 @@
+from collections import OrderedDict
 import torch
+
+def serialize_checkpoint_metadata(d):
+    return '__'.join([key + '_' + val for key, val in d.items()])
+
+def deserialize_checkpoint_metadata(s):
+    def split_keys_from_vals(keyval):
+        key, val = keyval.split('_')
+        return key, val
+    return OrderedDict(map(split_keys_from_vals, s.split('__')))
 
 def save_checkpoint(
     checkpoint_path,

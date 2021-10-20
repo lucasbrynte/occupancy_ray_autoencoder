@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from lib.config.config import config
 from lib.logging.logging import log
 from lib.logging.signal_manager import SignalManager
-from lib.logging.checkpoint import save_checkpoint, load_checkpoint
+from lib.logging.checkpoint import save_checkpoint, load_checkpoint, serialize_checkpoint_metadata
 from lib.logging.version_dump import version_dump
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
@@ -123,7 +123,7 @@ def main():
             )
         if epoch == 0 or (epoch+1) == config.OCC_RAY_AE.N_EPOCHS or (epoch+1) % config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL == 0:
             save_checkpoint(
-                os.path.join(config.CHECKPOINT_DIR, 'epoch_{:08d}'.format(epoch+1)),
+                os.path.join(config.CHECKPOINT_DIR, serialize_checkpoint_metadata({'epoch': '{:08d}'.format(epoch+1)})),
                 epoch+1,
                 (epoch+1) * len(train_dataset),
                 occ_ray_encoder,
