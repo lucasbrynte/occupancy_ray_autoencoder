@@ -25,6 +25,8 @@ def main():
     train_dataset = OccRayDataset(
         config.OCC_RAY_AE.TRAIN.DATA.N_SAMPLES,
         config.OCC_RAY_AE.TRAIN.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        anywhere_samples = True,
+        surface_samples = True,
     )
     train_dataloader = DataLoader(
         train_dataset,
@@ -36,6 +38,8 @@ def main():
     val_dataset = OccRayDataset(
         config.OCC_RAY_AE.VAL.DATA.N_SAMPLES,
         config.OCC_RAY_AE.VAL.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        anywhere_samples = True,
+        surface_samples = True,
     )
     val_dataloader = DataLoader(
         val_dataset,
