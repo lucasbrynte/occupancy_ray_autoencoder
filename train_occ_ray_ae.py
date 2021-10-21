@@ -12,6 +12,8 @@ from lib.logging.checkpoint import save_checkpoint, load_checkpoint, serialize_c
 from lib.logging.version_dump import version_dump
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
+from lib.run.run import preprocess_batch, occ_ray_ae_forward
+from lib.loss.loss import calc_loss
 
 
 
@@ -76,12 +78,12 @@ def main():
         for batch_idx, batch_data in enumerate(tqdm(train_dataloader, '[TRAIN] Epoch #{}/{}'.format(epoch+1, config.OCC_RAY_AE.N_EPOCHS))):
             is_last_batch = not (batch_idx+1) < len(train_dataloader)
             batch_data = preprocess_batch(batch_data)
-            batch_forward_out = batch_forward(
+            ae_out = occ_ray_ae_forward(
                 occ_ray_encoder,
                 occ_ray_decoder,
                 batch_data,
             )
-            loss = calc_loss(batch_data, batch_forward_out)
+            loss = calc_loss(batch_data, ae_out)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -93,8 +95,8 @@ def main():
                     # 'anywhere_pt_mask': anywhere_pt_mask.numpy(),
                     'surface_pts': batch_data['surface_pts'].numpy(),
                     'surface_pt_mask': batch_data['surface_pt_mask'].numpy(),
-                    'anywhere_occ_fcn_vals_pred': batch_forward_out['anywhere_occ_fcn_vals_pred'].detach().cpu().numpy(),
-                    'surface_occ_fcn_vals_pred': batch_forward_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
+                    'anywhere_occ_fcn_vals_pred': ae_out['anywhere_occ_fcn_vals_pred'].detach().cpu().numpy(),
+                    'surface_occ_fcn_vals_pred': ae_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
                     'anywhere_occ_fcn_vals_target': batch_data['anywhere_occ_fcn_vals'].numpy(),
                     'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
                     'loss': loss.detach().cpu().numpy(),
@@ -136,12 +138,12 @@ def validate(
 ):
     for batch_idx, batch_data in enumerate(tqdm(val_dataloader, '[VAL]')):
         batch_data = preprocess_batch(batch_data)
-        batch_forward_out = batch_forward(
+        ae_out = occ_ray_ae_forward(
             occ_ray_encoder,
             occ_ray_decoder,
             batch_data,
         )
-        loss = calc_loss(batch_data, batch_forward_out)
+        loss = calc_loss(batch_data, ae_out)
         signal_manager.record_val_batch(
             {
                 'n_surface_occ_fcn_samples': batch_data['n_surface_occ_fcn_samples'].numpy(),
@@ -150,8 +152,8 @@ def validate(
                 # 'anywhere_pt_mask': anywhere_pt_mask.numpy(),
                 'surface_pts': batch_data['surface_pts'].numpy(),
                 'surface_pt_mask': batch_data['surface_pt_mask'].numpy(),
-                'anywhere_occ_fcn_vals_pred': batch_forward_out['anywhere_occ_fcn_vals_pred'].detach().cpu().numpy(),
-                'surface_occ_fcn_vals_pred': batch_forward_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
+                'anywhere_occ_fcn_vals_pred': ae_out['anywhere_occ_fcn_vals_pred'].detach().cpu().numpy(),
+                'surface_occ_fcn_vals_pred': ae_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
                 'anywhere_occ_fcn_vals_target': batch_data['anywhere_occ_fcn_vals'].numpy(),
                 'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
                 'loss': loss.detach().cpu().numpy(),
@@ -162,55 +164,3 @@ def validate(
         log_signals = True,
         log_signals_tb = True,
     )
-
-def preprocess_batch(batch_data):
-    assert torch.all(batch_data['anywhere_pt_weights'] > 0) # Simplifies things if only surface points are variable-length
-    # batch_data['anywhere_pt_mask'] = batch_data['anywhere_pt_weights'] > 0
-    batch_data['surface_pt_mask'] = batch_data['surface_pt_weights'] > 0
-    return batch_data
-
-def batch_forward(
-    occ_ray_encoder,
-    occ_ray_decoder,
-    batch_data,
-):
-    z = occ_ray_encoder(batch_data['occ_ray_rasterized'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
-    occ_fcn_vals_pred = occ_ray_decoder(
-        z.reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)).expand((-1, config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, -1)).reshape((config.OCC_RAY_AE.BS*config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)),
-        torch.cat([
-            batch_data['anywhere_pts'],
-            batch_data['surface_pts'],
-        ], dim=1).reshape((config.OCC_RAY_AE.BS*config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, 1)).cuda(),
-    ).reshape((config.OCC_RAY_AE.BS, config.OCC_RAY_AE.N_OCC_FCN_SAMPLES))
-    if config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'bce':
-        occ_fcn_vals_pred = torch.sigmoid(occ_fcn_vals_pred)
-    anywhere_occ_fcn_vals_pred = occ_fcn_vals_pred[:, :config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES]
-    surface_occ_fcn_vals_pred = occ_fcn_vals_pred[:, -config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES:]
-    return {
-        'z': z,
-        'anywhere_occ_fcn_vals_pred': anywhere_occ_fcn_vals_pred,
-        'surface_occ_fcn_vals_pred': surface_occ_fcn_vals_pred,
-    }
-
-def calc_loss(batch_data, batch_forward_out):
-    occ_fcn_vals_pred = torch.cat([
-        batch_forward_out['anywhere_occ_fcn_vals_pred'],
-        batch_forward_out['surface_occ_fcn_vals_pred'],
-    ], dim=1).cuda()
-    occ_fcn_vals_target = torch.cat([
-        batch_data['anywhere_occ_fcn_vals'],
-        batch_data['surface_occ_fcn_vals'],
-    ], dim=1).cuda()
-    point_weights = torch.cat([
-        batch_data['anywhere_pt_weights'],
-        batch_data['surface_pt_weights'],
-    ], dim=1).cuda()
-    if config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'mse':
-        loss = nn.functional.mse_loss(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='none')
-        loss = torch.mean((point_weights * loss)[point_weights > 0])
-    elif config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'bce':
-        loss = nn.functional.binary_cross_entropy(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='none')
-        loss = torch.mean((point_weights * loss)[point_weights > 0])
-    else:
-        assert False
-    return loss
