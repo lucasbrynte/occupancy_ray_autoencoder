@@ -20,7 +20,7 @@ class OccRayDataset(Dataset):
     def __len__(self):
         return self._len
 
-    def sample_rasterized_occl_ray(self):
+    def _sample_rasterized_occ_ray(self):
         center_occluded = np.random.binomial(1, self._generation_parameters['prob_center_occluded'])
         def generate_start_stop_locations(N):
             start_intervals = 1 + np.floor(config.OCC_RAY_AE.OCC_RAY_RESOLUTION * np.random.gamma(self._generation_parameters['alpha_start'], scale=1/self._generation_parameters['beta_start'], size=(N,)))
@@ -52,20 +52,20 @@ class OccRayDataset(Dataset):
             assert locs[0] >= 1
         return occ_ray_rasterized, locs
 
-    def generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
+    def _generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
         eps = 1e-6
         point_samples = np.random.uniform(low=0, high=config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, size=(n_samples,))
         occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
         return point_samples, occ_fcn_vals
 
     def __getitem__(self, sample_idx):
-        occ_ray_rasterized, all_surface_pts = self.sample_rasterized_occl_ray()
+        occ_ray_rasterized, all_surface_pts = self._sample_rasterized_occ_ray()
         first_gridpoint = 0.5 * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
         last_gridpoint = (config.OCC_RAY_AE.OCC_RAY_RESOLUTION - 0.5) * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
         grid = np.linspace(first_gridpoint, last_gridpoint, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)
 
         if self._anywhere_samples:
-            anywhere_pts, anywhere_occ_fcn_vals = self.generate_anywhere_occ_fcn_samples(occ_ray_rasterized, config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES)
+            anywhere_pts, anywhere_occ_fcn_vals = self._generate_anywhere_occ_fcn_samples(occ_ray_rasterized, config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES)
             anywhere_pt_weights = np.ones((config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES,))
 
         if self._surface_samples:
