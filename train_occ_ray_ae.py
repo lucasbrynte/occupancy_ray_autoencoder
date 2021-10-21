@@ -25,6 +25,8 @@ def main():
     train_dataset = OccRayDataset(
         config.OCC_RAY_AE.TRAIN.DATA.N_SAMPLES,
         config.OCC_RAY_AE.TRAIN.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        random_seed = 23443419977523935600099423643672937524,
+        reset_seed_on_epoch_start = False,
         anywhere_samples = True,
         surface_samples = True,
     )
@@ -38,13 +40,15 @@ def main():
     val_dataset = OccRayDataset(
         config.OCC_RAY_AE.VAL.DATA.N_SAMPLES,
         config.OCC_RAY_AE.VAL.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS,
+        random_seed = 165569474884930433373555743278446600479,
+        reset_seed_on_epoch_start = True, # requires shuffle = False
         anywhere_samples = True,
         surface_samples = True,
     )
     val_dataloader = DataLoader(
         val_dataset,
         batch_size = config.OCC_RAY_AE.BS,
-        shuffle = True,
+        shuffle = False,
         pin_memory = True,
         drop_last = False,
     )

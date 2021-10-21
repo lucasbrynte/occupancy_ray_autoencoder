@@ -8,6 +8,8 @@ class OccRayDataset(Dataset):
         self,
         len,
         generation_parameters,
+        random_seed = None,
+        reset_seed_on_epoch_start = False,
         anywhere_samples = True,
         surface_samples = True,
     ):
@@ -16,15 +18,21 @@ class OccRayDataset(Dataset):
         self._generation_parameters = generation_parameters
         self._anywhere_samples = anywhere_samples
         self._surface_samples = surface_samples
+        self._random_seed = random_seed
+        self._reset_seed_on_epoch_start = reset_seed_on_epoch_start
+        self._reset_seed()
+
+    def _reset_seed(self):
+        self._random_generator = np.random.default_rng(self._random_seed)
 
     def __len__(self):
         return self._len
 
     def _sample_rasterized_occ_ray(self):
-        center_occluded = np.random.binomial(1, self._generation_parameters['prob_center_occluded'])
+        center_occluded = self._random_generator.binomial(1, self._generation_parameters['prob_center_occluded'])
         def generate_start_stop_locations(N):
-            start_intervals = 1 + np.floor(config.OCC_RAY_AE.OCC_RAY_RESOLUTION * np.random.gamma(self._generation_parameters['alpha_start'], scale=1/self._generation_parameters['beta_start'], size=(N,)))
-            stop_intervals = 1 + np.floor(config.OCC_RAY_AE.OCC_RAY_RESOLUTION * np.random.gamma(self._generation_parameters['alpha_stop'], scale=1/self._generation_parameters['beta_stop'], size=(N,)))
+            start_intervals = 1 + np.floor(config.OCC_RAY_AE.OCC_RAY_RESOLUTION * self._random_generator.gamma(self._generation_parameters['alpha_start'], scale=1/self._generation_parameters['beta_start'], size=(N,)))
+            stop_intervals = 1 + np.floor(config.OCC_RAY_AE.OCC_RAY_RESOLUTION * self._random_generator.gamma(self._generation_parameters['alpha_stop'], scale=1/self._generation_parameters['beta_stop'], size=(N,)))
             assert np.all(start_intervals >= 1)
             assert np.all(stop_intervals >= 1)
             locs = np.empty((2*N,), np.int64)
@@ -54,11 +62,18 @@ class OccRayDataset(Dataset):
 
     def _generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
         eps = 1e-6
-        point_samples = np.random.uniform(low=0, high=config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, size=(n_samples,))
+        point_samples = self._random_generator.uniform(low=0, high=config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, size=(n_samples,))
         occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
         return point_samples, occ_fcn_vals
 
     def __getitem__(self, sample_idx):
+        if self._reset_seed_on_epoch_start:
+            if sample_idx == 0:
+                self._reset_seed()
+                self._prev_sample_idx = 0
+            else:
+                assert sample_idx == self._prev_sample_idx + 1, 'Previous sample idx: {}, current: {} != {}.'.format(self._prev_sample_idx, sample_idx, self._prev_sample_idx+1)
+                self._prev_sample_idx += 1
         occ_ray_rasterized, all_surface_pts = self._sample_rasterized_occ_ray()
         first_gridpoint = 0.5 * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
         last_gridpoint = (config.OCC_RAY_AE.OCC_RAY_RESOLUTION - 0.5) * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
@@ -74,7 +89,7 @@ class OccRayDataset(Dataset):
             # surface_pts[:] = np.NaN # Although only the appropriate elements are masked out for the loss, backprop will still cause NaN gradients if any activations are NaN...
             surface_pt_weights = np.zeros((config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES,))
             if n_surface_occ_fcn_samples > 0:
-                surface_pts[:n_surface_occ_fcn_samples] = np.random.choice(all_surface_pts, size=(n_surface_occ_fcn_samples,), replace=False)
+                surface_pts[:n_surface_occ_fcn_samples] = self._random_generator.choice(all_surface_pts, size=(n_surface_occ_fcn_samples,), replace=False)
                 surface_pt_weights[:n_surface_occ_fcn_samples] = 1.0
                 # surface_pt_weights[:n_surface_occ_fcn_samples] = 1.0 * config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES / n_surface_occ_fcn_samples
             if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
