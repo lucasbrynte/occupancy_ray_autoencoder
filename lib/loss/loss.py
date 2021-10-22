@@ -2,13 +2,19 @@ import torch
 from torch import nn
 from lib.config.config import config
 
-def calc_loss(occ_fcn_vals_pred, occ_fcn_vals_target, point_weights):
+def calc_loss(occ_fcn_vals_pred, occ_fcn_vals_target, point_weights=None):
     if config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'mse':
         loss = nn.functional.mse_loss(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='none')
-        loss = torch.mean((point_weights * loss)[point_weights > 0])
+        if point_weights is None:
+            loss = torch.mean(loss)
+        else:
+            loss = torch.mean((point_weights * loss)[point_weights > 0])
     elif config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'bce':
         loss = nn.functional.binary_cross_entropy(occ_fcn_vals_pred, occ_fcn_vals_target, reduction='none')
-        loss = torch.mean((point_weights * loss)[point_weights > 0])
+        if point_weights is None:
+            loss = torch.mean(loss)
+        else:
+            loss = torch.mean((point_weights * loss)[point_weights > 0])
     else:
         assert False
     return loss
@@ -27,5 +33,5 @@ def calc_loss_anywhere_surface(batch_data, decoder_out):
         batch_data['anywhere_pt_weights'],
         batch_data['surface_pt_weights'],
     ], dim=1).cuda()
-    loss = calc_loss(occ_fcn_vals_pred, occ_fcn_vals_target, point_weights)
+    loss = calc_loss(occ_fcn_vals_pred, occ_fcn_vals_target, point_weights=point_weights)
     return loss
