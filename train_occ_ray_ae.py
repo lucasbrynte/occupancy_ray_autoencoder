@@ -13,7 +13,7 @@ from lib.logging.version_dump import version_dump
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 from lib.run.run import preprocess_batch, occ_ray_ae_forward
-from lib.loss.loss import calc_loss
+from lib.loss.loss import calc_loss_anywhere_surface
 
 
 
@@ -83,7 +83,7 @@ def main():
                 occ_ray_decoder,
                 batch_data,
             )
-            loss = calc_loss(batch_data, ae_out)
+            loss = calc_loss_anywhere_surface(batch_data, ae_out)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -143,7 +143,7 @@ def validate(
             occ_ray_decoder,
             batch_data,
         )
-        loss = calc_loss(batch_data, ae_out)
+        loss = calc_loss_anywhere_surface(batch_data, ae_out)
         signal_manager.record_val_batch(
             {
                 'n_surface_occ_fcn_samples': batch_data['n_surface_occ_fcn_samples'].numpy(),
