@@ -11,24 +11,37 @@ def occ_ray_encoder_forward(
     occ_ray_encoder,
     batch_data,
 ):
-    z = occ_ray_encoder(batch_data['occ_ray_rasterized'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
+    bs = batch_data['occ_ray_rasterized'].shape[0]
+    z = occ_ray_encoder(batch_data['occ_ray_rasterized'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
     return z
 
 def occ_ray_decoder_forward(
     occ_ray_decoder,
+    point_samples,
+    z,
+):
+    bs, n_samples = point_samples.shape
+    occ_fcn_vals_pred = occ_ray_decoder(
+        z.reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)).expand((-1, n_samples, -1)).reshape((bs*n_samples, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)),
+        point_samples.reshape((bs*n_samples, 1)).cuda(),
+    ).reshape((bs, n_samples))
+    if config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'bce':
+        occ_fcn_vals_pred = torch.sigmoid(occ_fcn_vals_pred)
+    return occ_fcn_vals_pred
+
+def occ_ray_decoder_forward_anywhere_surface(
+    occ_ray_decoder,
     batch_data,
     z,
 ):
-    # z = occ_ray_encoder(batch_data['occ_ray_rasterized'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
-    occ_fcn_vals_pred = occ_ray_decoder(
-        z.reshape((config.OCC_RAY_AE.BS, 1, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)).expand((-1, config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, -1)).reshape((config.OCC_RAY_AE.BS*config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)),
+    occ_fcn_vals_pred = occ_ray_decoder_forward(
+        occ_ray_decoder,
         torch.cat([
             batch_data['anywhere_pts'],
             batch_data['surface_pts'],
-        ], dim=1).reshape((config.OCC_RAY_AE.BS*config.OCC_RAY_AE.N_OCC_FCN_SAMPLES, 1)).cuda(),
-    ).reshape((config.OCC_RAY_AE.BS, config.OCC_RAY_AE.N_OCC_FCN_SAMPLES))
-    if config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'bce':
-        occ_fcn_vals_pred = torch.sigmoid(occ_fcn_vals_pred)
+        ], dim=1),
+        z,
+    )
     anywhere_occ_fcn_vals_pred = occ_fcn_vals_pred[:, :config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES]
     surface_occ_fcn_vals_pred = occ_fcn_vals_pred[:, -config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES:]
     return {
@@ -42,7 +55,7 @@ def occ_ray_ae_forward(
     batch_data,
 ):
     z = occ_ray_encoder_forward(occ_ray_encoder, batch_data)
-    decoder_out = occ_ray_decoder_forward(occ_ray_decoder, batch_data, z)
+    decoder_out = occ_ray_decoder_forward_anywhere_surface(occ_ray_decoder, batch_data, z)
     return {
         'z': z,
         'anywhere_occ_fcn_vals_pred': decoder_out['anywhere_occ_fcn_vals_pred'],
