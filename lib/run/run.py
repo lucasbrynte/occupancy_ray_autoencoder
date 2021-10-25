@@ -61,3 +61,14 @@ def occ_ray_ae_forward(
         'anywhere_occ_fcn_vals_pred': decoder_out['anywhere_occ_fcn_vals_pred'],
         'surface_occ_fcn_vals_pred': decoder_out['surface_occ_fcn_vals_pred'],
     }
+
+def interpolate_latent_codes(z):
+    z_bs = z.shape[0]
+    assert z.shape == (z_bs, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)
+    assert z_bs % 2 == 0
+    n_z_pairs = z_bs//2
+    z = z.reshape((n_z_pairs, 2, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM))
+    gamma = torch.linspace(0, 1, config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION).cuda().reshape((1, -1, 1))
+    z_interpol = torch.matmul(torch.cat((1-gamma, gamma), dim=2), z)
+    assert z_interpol.shape == (n_z_pairs, config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)
+    return z_interpol

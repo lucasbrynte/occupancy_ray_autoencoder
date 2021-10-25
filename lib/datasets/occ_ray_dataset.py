@@ -12,12 +12,14 @@ class OccRayDataset(Dataset):
         reset_seed_on_epoch_start = False,
         anywhere_samples = True,
         surface_samples = True,
+        dense_samples = False,
     ):
         super().__init__()
         self._len = len
         self._generation_parameters = generation_parameters
         self._anywhere_samples = anywhere_samples
         self._surface_samples = surface_samples
+        self._dense_samples = dense_samples
         self._random_seed = random_seed
         self._reset_seed_on_epoch_start = reset_seed_on_epoch_start
         self._reset_seed()
@@ -66,6 +68,12 @@ class OccRayDataset(Dataset):
         occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
         return point_samples, occ_fcn_vals
 
+    def _generate_dense_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
+        eps = 1e-6
+        point_samples = np.linspace(0, config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, n_samples)
+        occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+        return point_samples, occ_fcn_vals
+
     def __getitem__(self, sample_idx):
         if self._reset_seed_on_epoch_start:
             if sample_idx == 0:
@@ -98,6 +106,10 @@ class OccRayDataset(Dataset):
                 assert False
             surface_occ_fcn_vals = border_val * np.ones_like(surface_pts)
 
+        if self._dense_samples:
+            dense_pts, dense_occ_fcn_vals = self._generate_dense_occ_fcn_samples(occ_ray_rasterized, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)
+            # dense_pt_weights = np.ones((config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES,))
+
         sample = {}
         sample['occ_ray_rasterized'] = torch.tensor(occ_ray_rasterized.astype(np.float32))
         sample['grid'] = torch.tensor(grid.astype(np.float32))
@@ -111,4 +123,8 @@ class OccRayDataset(Dataset):
             sample['surface_pts'] = torch.tensor(surface_pts.astype(np.float32))
             sample['surface_pt_weights'] = torch.tensor(surface_pt_weights.astype(np.float32))
             sample['surface_occ_fcn_vals'] = torch.tensor(surface_occ_fcn_vals.astype(np.float32))
+        if self._dense_samples:
+            sample['dense_pts'] = torch.tensor(dense_pts.astype(np.float32))
+            # sample['dense_pt_weights'] = torch.tensor(dense_pt_weights.astype(np.float32))
+            sample['dense_occ_fcn_vals'] = torch.tensor(dense_occ_fcn_vals.astype(np.float32))
         return sample

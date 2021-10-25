@@ -1,18 +1,27 @@
 import os
 import shutil
 import click
+import json
 import dotsi
 config = dotsi.Dict()
+from deepdiff import DeepDiff
+import textwrap
 import train_occ_ray_ae
+import test_occ_ray_ae
+from lib.logging.logging import log
+from lib.logging.checkpoint import find_latest_checkpoint_file
 
 
 @click.group()
 @click.option('--exp-root', help='Root path in which to experiments.', default='out', show_default=True)
 @click.option('--exp-name', help='Experiment name.', required=True)
+@click.option('--old-exp-name', default=None, help='Old experiment name.')
+@click.option('--checkpoint-load-path', default=None, help='Path from which to load model checkpoint. Alternatively, if loading an old experiment, "latest" can be given as an option in order to locate the latest checkpoint available from the experiment.')
 def cli(**kwargs):
     config.EXP_ROOT = kwargs['exp_root']
     config.EXP_NAME = kwargs['exp_name']
     config.EXP_DIR = os.path.join(config.EXP_ROOT, config.EXP_NAME)
+    config.CHECKPOINT_LOAD_PATH = kwargs['checkpoint_load_path']
     config.CONFIG_PATH = os.path.join(config.EXP_DIR, 'config.json')
     config.LOG_PATH = os.path.join(config.EXP_DIR, 'LOG')
     config.TB_DIR = os.path.join(config.EXP_DIR, 'tb')
@@ -24,6 +33,18 @@ def cli(**kwargs):
     os.makedirs(config.TB_DIR, exist_ok=True)
     os.makedirs(config.CHECKPOINT_DIR, exist_ok=True)
     os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
+
+    config.OLD_EXP_NAME = kwargs['old_exp_name']
+    if config.OLD_EXP_NAME is not None:
+        assert config.CHECKPOINT_LOAD_PATH is not None
+        config.OLD_EXP_DIR = os.path.join(config.EXP_ROOT, config.OLD_EXP_NAME)
+        with open(os.path.join(config.OLD_EXP_DIR, 'config.json'), 'r') as f:
+            config.OLD = dotsi.Dict(json.load(f))
+        if config.CHECKPOINT_LOAD_PATH.lower() == 'latest':
+            assert config.OLD_EXP_NAME is not None
+            fname_latest, latest_epoch = find_latest_checkpoint_file(os.path.join(config.OLD_EXP_DIR, 'checkpoints'))
+            config.CHECKPOINT_LOAD_PATH = os.path.join(config.OLD_EXP_DIR, 'checkpoints', fname_latest)
+            assert os.path.exists(config.CHECKPOINT_LOAD_PATH)
 
 @cli.group()
 def occ_ray_ae(**kwargs):
@@ -45,6 +66,32 @@ def occ_ray_ae(**kwargs):
     }
 
     assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+
+    check_old_new_consistency('config.OCC_RAY_AE.RAY_RANGE')
+    check_old_new_consistency('config.OCC_RAY_AE.OCC_RAY_LATENT_DIM')
+    check_old_new_consistency('config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION')
+    check_old_new_consistency('config.OCC_RAY_AE.ARCH')
+    check_old_new_consistency('config.OCC_RAY_AE.OCC_RAY_RESOLUTION')
+
+def check_old_new_consistency(new_name):
+    tmp = new_name.split('.')
+    old_name = '.'.join([tmp[0]] + ['OLD'] + tmp[1:])
+    new_val = eval(new_name)
+    try:
+        old_val = eval(old_name)
+    except KeyError:
+        log().warning('Old configuration not found: {}'.format(old_name))
+        return
+    complex_structure = isinstance(old_val, (dict, list))
+    if new_val != old_val:
+        warn_msg = 'Configuration mismatch for [{}].'.format(new_name)
+        if not complex_structure:
+            warn_msg += '\n' + textwrap.indent('Reverting to old value: {} -> {}'.format(new_val, old_val), 2*' ')
+        else:
+            warn_msg += '\n' + textwrap.indent('Reverting to old value. Diff below:', 2*' ')
+            warn_msg += '\n' + textwrap.indent(json.dumps(DeepDiff(old_val, new_val), indent=2), 2*' ')
+        log().warning(warn_msg)
+        exec(new_name + ' = ' + old_name)
 
 @occ_ray_ae.command()
 def train():
@@ -91,3 +138,31 @@ def train():
     # config.OCC_RAY_AE.RECONSTRUCTION_LOSS = 'bce'
 
     train_occ_ray_ae.main()
+
+@occ_ray_ae.command()
+def test():
+    assert config.OLD_EXP_NAME is not None
+    assert config.CHECKPOINT_LOAD_PATH is not None
+
+    config.OCC_RAY_AE.TEST = {}
+    config.OCC_RAY_AE.BS = 16
+    config.OCC_RAY_AE.TEST.DATA = {}
+    config.OCC_RAY_AE.TEST.DATA.N_ENCODED_INTERPOLATION_PAIRS = 16
+    config.OCC_RAY_AE.TEST.DATA.N_RANDOM_INTERPOLATION_PAIRS = 16
+    config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION = 20
+    config.OCC_RAY_AE.TEST.DATA.SYNTH_OCC_RAY_GENERATION_PARAMETERS = {
+        'prob_center_occluded': 0.5,
+        'alpha_start': 1,
+        'beta_start': 1/0.15,
+        'alpha_stop': 1,
+        'beta_stop': 1/0.15,
+        # 'prob_center_occluded': 0.75,
+        # 'alpha_start': 1,
+        # 'beta_start': 1/0.1,
+        # 'alpha_stop': 1,
+        # 'beta_stop': 1/0.05,
+    }
+    config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES = 200
+    config.OCC_RAY_AE.RECONSTRUCTION_LOSS = config.OLD.OCC_RAY_AE.RECONSTRUCTION_LOSS
+
+    test_occ_ray_ae.main()

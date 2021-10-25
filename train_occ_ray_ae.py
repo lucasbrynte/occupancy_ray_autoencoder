@@ -31,6 +31,7 @@ def main():
         reset_seed_on_epoch_start = False,
         anywhere_samples = True,
         surface_samples = True,
+        dense_samples = False,
     )
     train_dataloader = DataLoader(
         train_dataset,
@@ -46,6 +47,7 @@ def main():
         reset_seed_on_epoch_start = True, # requires shuffle = False
         anywhere_samples = True,
         surface_samples = True,
+        dense_samples = False,
     )
     val_dataloader = DataLoader(
         val_dataset,
