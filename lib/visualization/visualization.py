@@ -8,6 +8,7 @@ def _prediction_barplot(
     occ_fcn_vals_pred = None,
     occ_fcn_vals_target = None,
     occ_ray_rasterized = None,
+    line_plot = False,
 ):
     assert not all([
         samples is None,
@@ -35,9 +36,9 @@ def _prediction_barplot(
         'r--')
     if occ_fcn_vals_target is not None:
         # ax.plot(samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_target, marker='o', markeredgecolor='red', markerfacecolor='None', linestyle='None')
-        ax.plot(samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_target, 'r.')
+        ax.plot(samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_target, 'r.-' if line_plot else 'r.')
     if occ_fcn_vals_pred is not None:
-        ax.plot(samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_pred, 'bx')
+        ax.plot(samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_pred, 'b.-' if line_plot else 'bx')
     ax.set_xlim(0, config.OCC_RAY_AE.RAY_RANGE)
     ymin, ymax = ax.get_ylim()
     ax.set_ylim(min(0, ymin), max(1, ymax))
@@ -48,6 +49,7 @@ def prediction_barplot(
     occ_fcn_vals_pred = None,
     occ_fcn_vals_target = None,
     occ_ray_rasterized = None,
+    line_plot = False,
     write_tb = False,
     tb_tag = None,
     tb_step = None,
@@ -63,6 +65,7 @@ def prediction_barplot(
         occ_fcn_vals_pred = occ_fcn_vals_pred,
         occ_fcn_vals_target = occ_fcn_vals_target,
         occ_ray_rasterized = occ_ray_rasterized,
+        line_plot = line_plot,
     )
     if write_tb:
         get_tb_writer().add_figure(tb_tag, fig, global_step=tb_step)
