@@ -21,6 +21,9 @@ def _prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, o
     # ax.plot(radial_samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_target, marker='o', markeredgecolor='red', markerfacecolor='None', linestyle='None')
     ax.plot(radial_samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_target, 'r.')
     ax.plot(radial_samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_pred, 'bx')
+    ax.set_xlim(0, config.OCC_RAY_AE.RAY_RANGE)
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(min(0, ymin), max(1, ymax))
     return fig
 
 def prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target, write_tb=False, tb_tag=None, tb_step=None):
