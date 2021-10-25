@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from lib.logging.tb import get_tb_writer
 from lib.config.config import config
 
-def prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target):
+def _prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target):
     fig, ax = plt.subplots(figsize=(10,2))
     grid = np.linspace(0, config.OCC_RAY_AE.OCC_RAY_RESOLUTION-1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION) * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
     ax.bar(
@@ -23,7 +23,13 @@ def prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, oc
     ax.plot(radial_samples*config.OCC_RAY_AE.RAY_RANGE/config.OCC_RAY_AE.OCC_RAY_RESOLUTION, occ_fcn_vals_pred, 'bx')
     return fig
 
-def visualize_prediction(tag, step, occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target, write_tb=True):
-    fig = prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target)
+def prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target, write_tb=False, tb_tag=None, tb_step=None):
     if write_tb:
-        get_tb_writer().add_figure(tag, fig, global_step=step)
+        assert tb_tag is not None
+        assert tb_step is not None
+    else:
+        assert tb_tag is None
+        assert tb_step is None
+    fig = _prediction_barplot(occ_ray_rasterized, radial_samples, occ_fcn_vals_pred, occ_fcn_vals_target)
+    if write_tb:
+        get_tb_writer().add_figure(tb_tag, fig, global_step=tb_step)

@@ -3,7 +3,7 @@ import numpy as np
 from lib.config.config import config
 from lib.logging.logging import log
 from lib.logging.tb import get_tb_writer
-from lib.visualization.visualization import visualize_prediction
+from lib.visualization.visualization import prediction_barplot
 
 class SignalManager():
     def __init__(self):
@@ -39,9 +39,7 @@ class SignalManager():
             self._tb_writer.add_scalar("std_abs_err_surface/train", metrics['std_abs_err_surface'], global_step=self._global_train_batch_cnt)
             # self._tb_writer.flush()
         if visualize_pred:
-            visualize_prediction(
-                'figures/prediction/train',
-                self._global_train_batch_cnt,
+            prediction_barplot(
                 batch_data['occ_ray_rasterized'][0],
                 np.concatenate([
                     batch_data['anywhere_pts'][0],
@@ -55,6 +53,9 @@ class SignalManager():
                     batch_data['anywhere_occ_fcn_vals_target'][0],
                     batch_data['surface_occ_fcn_vals_target'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
+                write_tb = True,
+                tb_tag = 'figures/prediction/train',
+                tb_step = self._global_train_batch_cnt,
             )
         self._global_train_batch_cnt += 1
 
@@ -67,9 +68,7 @@ class SignalManager():
         self._val_metrics.append(metrics)
 
         if visualize_pred:
-            visualize_prediction(
-                'figures/prediction/val',
-                self._global_val_batch_cnt,
+            prediction_barplot(
                 batch_data['occ_ray_rasterized'][0],
                 np.concatenate([
                     batch_data['anywhere_pts'][0],
@@ -83,6 +82,9 @@ class SignalManager():
                     batch_data['anywhere_occ_fcn_vals_target'][0],
                     batch_data['surface_occ_fcn_vals_target'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
+                write_tb = True,
+                tb_tag = 'figures/prediction/val',
+                tb_step = self._global_val_batch_cnt,
             )
         self._global_val_batch_cnt += 1
 
