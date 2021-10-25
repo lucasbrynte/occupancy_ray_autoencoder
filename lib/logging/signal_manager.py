@@ -40,19 +40,19 @@ class SignalManager():
             # self._tb_writer.flush()
         if visualize_pred:
             prediction_barplot(
-                batch_data['occ_ray_rasterized'][0],
-                np.concatenate([
+                samples = np.concatenate([
                     batch_data['anywhere_pts'][0],
                     batch_data['surface_pts'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
-                np.concatenate([
+                occ_fcn_vals_pred = np.concatenate([
                     batch_data['anywhere_occ_fcn_vals_pred'][0],
                     batch_data['surface_occ_fcn_vals_pred'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
-                np.concatenate([
+                occ_fcn_vals_target = np.concatenate([
                     batch_data['anywhere_occ_fcn_vals_target'][0],
                     batch_data['surface_occ_fcn_vals_target'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
+                occ_ray_rasterized = batch_data['occ_ray_rasterized'][0],
                 write_tb = True,
                 tb_tag = 'figures/prediction/train',
                 tb_step = self._global_train_batch_cnt,
@@ -69,19 +69,19 @@ class SignalManager():
 
         if visualize_pred:
             prediction_barplot(
-                batch_data['occ_ray_rasterized'][0],
-                np.concatenate([
+                samples = np.concatenate([
                     batch_data['anywhere_pts'][0],
                     batch_data['surface_pts'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
-                np.concatenate([
+                occ_fcn_vals_pred = np.concatenate([
                     batch_data['anywhere_occ_fcn_vals_pred'][0],
                     batch_data['surface_occ_fcn_vals_pred'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
-                np.concatenate([
+                occ_fcn_vals_target = np.concatenate([
                     batch_data['anywhere_occ_fcn_vals_target'][0],
                     batch_data['surface_occ_fcn_vals_target'][0, :batch_data['n_surface_occ_fcn_samples'][0]],
                 ], axis=0),
+                occ_ray_rasterized = batch_data['occ_ray_rasterized'][0],
                 write_tb = True,
                 tb_tag = 'figures/prediction/val',
                 tb_step = self._global_val_batch_cnt,
