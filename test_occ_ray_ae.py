@@ -14,6 +14,7 @@ from lib.datasets.random_latent_code_dataset import RandomLatentCodeDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 from lib.run.run import preprocess_batch, occ_ray_encoder_forward, occ_ray_decoder_forward, interpolate_latent_codes
 from lib.loss.loss import calc_loss
+from lib.visualization.visualization import prediction_barplot
 
 
 def main():
@@ -71,19 +72,19 @@ def main():
         for batch_idx, batch_data in enumerate(tqdm(test_dataloader_encoded_interpolation_samples, '[TEST INTERP ENC]')):
             # batch_data = preprocess_batch(batch_data) # add 'surface_pt_mask'
             z = occ_ray_encoder_forward(
-            occ_ray_encoder,
-            batch_data,
+                occ_ray_encoder,
+                batch_data,
             )
             z_bs = z.shape[0]
             assert z_bs % 2 == 0
             n_z_pairs = z_bs//2
             z_interpol = interpolate_latent_codes(z)
-            occ_fcn_vals_pred = occ_ray_decoder_forward(
+            dense_occ_fcn_vals_pred = occ_ray_decoder_forward(
                 occ_ray_decoder,
                 batch_data['dense_pts'][::2, :].reshape((n_z_pairs, 1, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)).expand(-1, config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, -1).reshape((n_z_pairs * config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)),
                 z_interpol.reshape((n_z_pairs * config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)),
             ).reshape((n_z_pairs, config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES))
-            # loss = calc_loss(occ_fcn_vals_pred, batch_data['dense_occ_fcn_vals'])
+            # loss = calc_loss(dense_occ_fcn_vals_pred, batch_data['dense_occ_fcn_vals'])
 
         for batch_idx, batch_data in enumerate(tqdm(test_dataloader_random_interpolation_samples, '[TEST INTERP RND]')):
             # batch_data = preprocess_batch(batch_data) # add 'surface_pt_mask'
@@ -91,7 +92,7 @@ def main():
             assert z_bs % 2 == 0
             n_z_pairs = z_bs//2
             z_interpol = interpolate_latent_codes(batch_data['z'].cuda())
-            occ_fcn_vals_pred = occ_ray_decoder_forward(
+            dense_occ_fcn_vals_pred = occ_ray_decoder_forward(
                 occ_ray_decoder,
                 batch_data['dense_pts'][::2, :].reshape((n_z_pairs, 1, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)).expand(-1, config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, -1).reshape((n_z_pairs * config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)),
                 z_interpol.reshape((n_z_pairs * config.OCC_RAY_AE.TEST.DATA.INTERPOLATION_RESOLUTION, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM)),
