@@ -63,6 +63,7 @@ def occ_ray_ae(**kwargs):
         'DECODER': {
             'FC_CHANNEL_LIST': [1024, 1024, 1024, 1024],
         },
+        'BATCH_NORM': False,
     }
 
     assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'

@@ -66,9 +66,11 @@ def main():
         # ksize_list = [3, 3, 3, 3, 3, 3, 3],
         # stride_list = [1, 2, 1, 2, 1, 2, 1],
         # fc_channel_list = [1024, 1024, 1024, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
+        batch_norm = config.OCC_RAY_AE.ARCH.BATCH_NORM,
     ).cuda()
     occ_ray_decoder = OccRayDecoder(
         fc_channel_list = [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM+1] + list(config.OCC_RAY_AE.ARCH.DECODER.FC_CHANNEL_LIST) + [1],
+        batch_norm = config.OCC_RAY_AE.ARCH.BATCH_NORM,
     ).cuda()
 
     optimizer = torch.optim.Adam([
@@ -77,6 +79,8 @@ def main():
     ], lr = config.OCC_RAY_AE.LR)
 
     for epoch in range(config.OCC_RAY_AE.N_EPOCHS):
+        occ_ray_encoder.train()
+        occ_ray_decoder.train()
         for batch_idx, batch_data in enumerate(tqdm(train_dataloader, '[TRAIN] Epoch #{}/{}'.format(epoch+1, config.OCC_RAY_AE.N_EPOCHS))):
             is_last_batch = not (batch_idx+1) < len(train_dataloader)
             batch_data = preprocess_batch(batch_data)
@@ -115,6 +119,8 @@ def main():
                         occ_ray_decoder,
                         signal_manager,
                     )
+        occ_ray_encoder.eval()
+        occ_ray_decoder.eval()
         with torch.no_grad():
             validate(
                 val_dataloader,
