@@ -6,7 +6,7 @@ def version_dump():
     os.makedirs(config.VERSION_DUMP_DIR, exist_ok=True)
 
     diff_path = os.path.join(config.VERSION_DUMP_DIR, 'DIFF')
-    tracked_list = os.path.join(config.VERSION_DUMP_DIR, 'TRACKED')
+    untracked_list = os.path.join(config.VERSION_DUMP_DIR, 'UNTRACKED')
     head_hash_path = os.path.join(config.VERSION_DUMP_DIR, 'HEAD_HASH')
     stash_hash_path = os.path.join(config.VERSION_DUMP_DIR, 'STASH_W_MODIFIED_HASH')
     zip_tracked = os.path.join(config.VERSION_DUMP_DIR, 'tracked.zip')
@@ -33,11 +33,11 @@ def version_dump():
 
     # Store list of untracked files
     cmd = ['git', 'ls-files', '--others', '--exclude-standard']
-    with open(tracked_list, 'w') as f:
+    with open(untracked_list, 'w') as f:
         subprocess.run(cmd, check=True, stdout=f)
 
     # Archive untracked files
-    cmd = ['xargs', '-a', tracked_list, 'zip', zip_untracked]
+    cmd = ['xargs', '-a', untracked_list, 'zip', zip_untracked]
     p = subprocess.run(cmd, check=True)
 
     # Archive tracked files
