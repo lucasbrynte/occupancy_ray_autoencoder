@@ -23,13 +23,18 @@ def version_dump():
     cmd = ['git', 'stash', 'create']
     p = subprocess.run(cmd, check=True, capture_output=True)
     stash_hash = p.stdout.decode('utf-8').split('\n')[0]
+    no_changes_to_stash = stash_hash == ''
+    if no_changes_to_stash:
+        stash_hash = head_hash
+    assert stash_hash != ''
     with open(stash_hash_path, 'w') as f:
         f.writelines([stash_hash])
 
     # Store diff of working tree changes, including index, against last commit
-    cmd = ['git', 'diff', 'HEAD']
-    with open(diff_path, 'w') as f:
-        subprocess.run(cmd, check=True, stdout=f)
+    if not no_changes_to_stash:
+        cmd = ['git', 'diff', 'HEAD']
+        with open(diff_path, 'w') as f:
+            subprocess.run(cmd, check=True, stdout=f)
 
     # Store list of untracked files
     cmd = ['git', 'ls-files', '--others', '--exclude-standard']
