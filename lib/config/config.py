@@ -108,6 +108,7 @@ def train():
     config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL = None # Just every epoch
     # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = None
     config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 256
+    config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL = 256
     # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 1024
     config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL = None # Just every epoch
     config.OCC_RAY_AE.TRAIN.DATA = {}

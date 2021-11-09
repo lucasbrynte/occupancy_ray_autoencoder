@@ -108,7 +108,7 @@ def main():
                     'loss': loss.detach().cpu().numpy(),
                 },
                 log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
-                log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
+                log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL == 0),
                 visualize_pred = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0),
             )
             if not is_last_batch and (config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL == 0):
