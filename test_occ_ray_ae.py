@@ -57,9 +57,11 @@ def main():
         ksize_list = config.OCC_RAY_AE.ARCH.ENCODER.KSIZE_LIST,
         stride_list = config.OCC_RAY_AE.ARCH.ENCODER.STRIDE_LIST,
         fc_channel_list = list(config.OCC_RAY_AE.ARCH.ENCODER.FC_CHANNEL_LIST) + [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
+        norm_config = config.OCC_RAY_AE.ARCH.NORMALIZATION,
     ).cuda()
     occ_ray_decoder = OccRayDecoder(
         fc_channel_list = [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM+1] + list(config.OCC_RAY_AE.ARCH.DECODER.FC_CHANNEL_LIST) + [1],
+        norm_config = config.OCC_RAY_AE.ARCH.NORMALIZATION,
     ).cuda()
 
     load_checkpoint(

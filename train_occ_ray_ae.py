@@ -66,11 +66,11 @@ def main():
         # ksize_list = [3, 3, 3, 3, 3, 3, 3],
         # stride_list = [1, 2, 1, 2, 1, 2, 1],
         # fc_channel_list = [1024, 1024, 1024, config.OCC_RAY_AE.OCC_RAY_LATENT_DIM],
-        batch_norm = config.OCC_RAY_AE.ARCH.BATCH_NORM,
+        norm_config = config.OCC_RAY_AE.ARCH.NORMALIZATION,
     ).cuda()
     occ_ray_decoder = OccRayDecoder(
         fc_channel_list = [config.OCC_RAY_AE.OCC_RAY_LATENT_DIM+1] + list(config.OCC_RAY_AE.ARCH.DECODER.FC_CHANNEL_LIST) + [1],
-        batch_norm = config.OCC_RAY_AE.ARCH.BATCH_NORM,
+        norm_config = config.OCC_RAY_AE.ARCH.NORMALIZATION,
     ).cuda()
 
     optimizer = torch.optim.Adam([
