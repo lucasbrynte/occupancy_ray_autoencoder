@@ -78,6 +78,23 @@ def main():
         {'name': 'occ_ray_decoder', 'params': occ_ray_decoder.parameters()},
     ], lr = config.OCC_RAY_AE.LR)
 
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode = 'min',
+        factor = 0.5,
+        # patience = 10,
+        # patience = 32,
+        # patience = 64,
+        patience = 128,
+    )
+    # ReduceLROnPlateau default settings:
+    # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    #     optimizer,
+    #     mode = 'min',
+    #     factor = 0.1,
+    #     patience = 10,
+    # )
+
     for epoch in range(config.OCC_RAY_AE.N_EPOCHS):
         occ_ray_encoder.train()
         occ_ray_decoder.train()
@@ -119,6 +136,12 @@ def main():
                 log_signals_tb = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL == 0),
                 visualize_pred = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL == 0),
             )
+            # # NOTE!!!!!
+            # # Magnitude will vary as a simple consequence of a varying number of surface points.
+            # # Perhaps this matter should be thought through further.
+            # # On the other hand, train/val accuracy could be used instead, which is perhaps less noisy.
+            # # We should also think further about whether to use train or validation metrics for plateau detection...
+            lr_scheduler.step(loss.detach())
             if not is_last_batch and (config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL == 0):
                 with torch.no_grad():
                     validate(
@@ -144,6 +167,7 @@ def main():
                 occ_ray_encoder,
                 occ_ray_decoder,
                 optimizer,
+                lr_scheduler,
             )
 
 def validate(

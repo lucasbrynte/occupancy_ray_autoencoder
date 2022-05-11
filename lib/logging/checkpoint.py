@@ -27,6 +27,7 @@ def save_checkpoint(
     occ_ray_encoder,
     occ_ray_decoder,
     optimizer,
+    lr_scheduler,
 ):
     torch.save(
         {
@@ -35,6 +36,7 @@ def save_checkpoint(
             'occ_ray_encoder_state_dict': occ_ray_encoder.state_dict(),
             'occ_ray_decoder_state_dict': occ_ray_decoder.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
+            'lr_scheduler_state_dict': lr_scheduler.state_dict(),
         },
         checkpoint_path,
     )
@@ -44,9 +46,12 @@ def load_checkpoint(
     occ_ray_encoder,
     occ_ray_decoder,
     optimizer=None,
+    lr_scheduler=None,
 ):
     checkpoint = torch.load(checkpoint_path)
     occ_ray_encoder.load_state_dict(checkpoint['occ_ray_encoder_state_dict'])
     occ_ray_decoder.load_state_dict(checkpoint['occ_ray_decoder_state_dict'])
     if optimizer is not None:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    if lr_scheduler is not None:
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])

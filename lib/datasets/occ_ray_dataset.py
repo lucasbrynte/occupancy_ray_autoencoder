@@ -99,6 +99,9 @@ class OccRayDataset(Dataset):
             if n_surface_occ_fcn_samples > 0:
                 surface_pts[:n_surface_occ_fcn_samples] = self._random_generator.choice(all_surface_pts, size=(n_surface_occ_fcn_samples,), replace=False)
                 surface_pt_weights[:n_surface_occ_fcn_samples] = 1.0
+                # Note: I have not experimented with normalizing the surface loss based on the number of surface points.
+                # More points will at the moment result in more emphasis on surface points relative to anywhere points.
+                # Another alternative would be to fill with anywhere points instead of unused samples.
                 # surface_pt_weights[:n_surface_occ_fcn_samples] = 1.0 * config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES / n_surface_occ_fcn_samples
             if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
                 border_val = 0.5
