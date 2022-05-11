@@ -92,7 +92,9 @@ def check_old_new_consistency(new_name):
             warn_msg += '\n' + textwrap.indent('Reverting to old value: {} -> {}'.format(new_val, old_val), 2*' ')
         else:
             warn_msg += '\n' + textwrap.indent('Reverting to old value. Diff below:', 2*' ')
-            warn_msg += '\n' + textwrap.indent(json.dumps(DeepDiff(old_val, new_val), indent=2), 2*' ')
+            # NOTE: Cannot recall why str() was preferred over json.dumps() below.
+            # warn_msg += '\n' + textwrap.indent(json.dumps(DeepDiff(old_val, new_val), indent=2), 2*' ')
+            warn_msg += '\n' + textwrap.indent(str(DeepDiff(old_val, new_val)), 2*' ')
         log().warning(warn_msg)
         exec(new_name + ' = ' + old_name)
 
