@@ -105,6 +105,8 @@ def train():
     # config.OCC_RAY_AE.N_EPOCHS = 100000
     config.OCC_RAY_AE.N_EPOCHS = 15000
     config.OCC_RAY_AE.N_EPOCHS_CHECKPOINT_INTERVAL = 500
+    # config.OCC_RAY_AE.EXTRA_CHECKPOINTS_AT_EPOCHS = []
+    config.OCC_RAY_AE.EXTRA_CHECKPOINTS_AT_EPOCHS = list(range(1, 10, 1)) + list(range(10, 30, 5)) + list(range(30, 100, 10)) + list(range(100, 200, 25)) + list(range(200, 500, 50)) + list(range(500, 1000, 100)) + list(range(1000, 3000, 250))
     config.OCC_RAY_AE.N_BATCHES_VAL_INTERVAL = None # Just every epoch
     # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = None
     config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 256
