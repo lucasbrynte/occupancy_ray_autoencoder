@@ -13,7 +13,7 @@ from lib.logging.version_dump import version_dump
 from lib.datasets.occ_ray_dataset import OccRayDataset
 from lib.models.occ_ray_ae import OccRayEncoder, OccRayDecoder
 from lib.run.run import preprocess_batch, occ_ray_ae_forward
-from lib.loss.loss import calc_loss_anywhere_surface
+from lib.loss.loss import calc_loss_anywhere_surface, calc_pairwise_sinkhorn_regularization_loss
 
 
 
@@ -89,7 +89,13 @@ def main():
                 occ_ray_decoder,
                 batch_data,
             )
-            loss = calc_loss_anywhere_surface(batch_data, ae_out)
+            main_loss = calc_loss_anywhere_surface(batch_data, ae_out)
+            if config.OCC_RAY_AE.SINKHORN_REG.enabled:
+                sinkhorn_reg_loss = calc_pairwise_sinkhorn_regularization_loss(batch_data, ae_out)
+                loss = main_loss + config.OCC_RAY_AE.SINKHORN_REG.loss_coefficient * sinkhorn_reg_loss
+            else:
+                sinkhorn_reg_loss = torch.zeros_like(main_loss)
+                loss = main_loss
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -105,6 +111,8 @@ def main():
                     'surface_occ_fcn_vals_pred': ae_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
                     'anywhere_occ_fcn_vals_target': batch_data['anywhere_occ_fcn_vals'].numpy(),
                     'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
+                    'main_loss': main_loss.detach().cpu().numpy(),
+                    'sinkhorn_reg_loss': sinkhorn_reg_loss.detach().cpu().numpy(),
                     'loss': loss.detach().cpu().numpy(),
                 },
                 log_signals = is_last_batch or (config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL is not None and (batch_idx+1) % config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL == 0),
@@ -151,7 +159,13 @@ def validate(
             occ_ray_decoder,
             batch_data,
         )
-        loss = calc_loss_anywhere_surface(batch_data, ae_out)
+        main_loss = calc_loss_anywhere_surface(batch_data, ae_out)
+        if config.OCC_RAY_AE.SINKHORN_REG.enabled:
+            sinkhorn_reg_loss = calc_pairwise_sinkhorn_regularization_loss(batch_data, ae_out)
+            loss = main_loss + config.OCC_RAY_AE.SINKHORN_REG.loss_coefficient * sinkhorn_reg_loss
+        else:
+            sinkhorn_reg_loss = torch.zeros_like(main_loss)
+            loss = main_loss
         signal_manager.record_val_batch(
             {
                 'n_surface_occ_fcn_samples': batch_data['n_surface_occ_fcn_samples'].numpy(),
@@ -164,6 +178,8 @@ def validate(
                 'surface_occ_fcn_vals_pred': ae_out['surface_occ_fcn_vals_pred'].detach().cpu().numpy(),
                 'anywhere_occ_fcn_vals_target': batch_data['anywhere_occ_fcn_vals'].numpy(),
                 'surface_occ_fcn_vals_target': batch_data['surface_occ_fcn_vals'].numpy(),
+                'main_loss': main_loss.detach().cpu().numpy(),
+                'sinkhorn_reg_loss': sinkhorn_reg_loss.detach().cpu().numpy(),
                 'loss': loss.detach().cpu().numpy(),
             },
             visualize_pred = batch_idx == 0,

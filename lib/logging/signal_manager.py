@@ -23,7 +23,9 @@ class SignalManager():
         metrics = self._calculate_metrics(batch_data)
         if log_signals:
             log().info('[TRAIN] ' + ','.join([
-                'loss: {:.8f}'.format(metrics['loss']),
+                # 'loss: {:.8f}'.format(metrics['loss']),
+                'main_loss: {:.8f}'.format(metrics['main_loss']),
+                'sinkhorn_reg_loss: {:.8f}'.format(metrics['sinkhorn_reg_loss']),
                 'acc: {:.2f}%'.format(100*metrics['acc']),
                 'mean_abs_err_anywhere: {:.4f}'.format(metrics['mean_abs_err_anywhere']),
                 'mean_abs_err_surface: {:.4f}'.format(metrics['mean_abs_err_surface']),
@@ -32,6 +34,8 @@ class SignalManager():
             ]))
         if log_signals_tb:
             self._tb_writer.add_scalar("loss/train", metrics['loss'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("main_loss/train", metrics['main_loss'], global_step=self._global_train_batch_cnt)
+            self._tb_writer.add_scalar("sinkhorn_reg_loss/train", metrics['sinkhorn_reg_loss'], global_step=self._global_train_batch_cnt)
             self._tb_writer.add_scalar("acc/train", metrics['acc'], global_step=self._global_train_batch_cnt)
             self._tb_writer.add_scalar("mean_abs_err_anywhere/train", metrics['mean_abs_err_anywhere'], global_step=self._global_train_batch_cnt)
             self._tb_writer.add_scalar("mean_abs_err_surface/train", metrics['mean_abs_err_surface'], global_step=self._global_train_batch_cnt)
@@ -97,6 +101,8 @@ class SignalManager():
     ):
         avg_metrics = {
             'loss': np.mean([ metrics['loss'] for metrics in self._val_metrics ]),
+            'main_loss': np.mean([ metrics['main_loss'] for metrics in self._val_metrics ]),
+            'sinkhorn_reg_loss': np.mean([ metrics['sinkhorn_reg_loss'] for metrics in self._val_metrics ]),
             'acc': np.mean([ metrics['acc'] for metrics in self._val_metrics ]),
             'mean_abs_err_anywhere': np.mean([ metrics['mean_abs_err_anywhere'] for metrics in self._val_metrics ]),
             'mean_abs_err_surface': np.mean([ metrics['mean_abs_err_surface'] for metrics in self._val_metrics ]),
@@ -105,7 +111,9 @@ class SignalManager():
         }
         if log_signals:
             log().info('[VAL] ' + ','.join([
-                'loss: {:.8f}'.format(avg_metrics['loss']),
+                # 'loss: {:.8f}'.format(avg_metrics['loss']),
+                'main_loss: {:.8f}'.format(avg_metrics['main_loss']),
+                'sinkhorn_reg_loss: {:.8f}'.format(avg_metrics['sinkhorn_reg_loss']),
                 'acc: {:.2f}%'.format(100*avg_metrics['acc']),
                 'mean_abs_err_anywhere: {:.4f}'.format(avg_metrics['mean_abs_err_anywhere']),
                 'mean_abs_err_surface: {:.4f}'.format(avg_metrics['mean_abs_err_surface']),
@@ -114,6 +122,8 @@ class SignalManager():
             ]))
         if log_signals_tb:
             self._tb_writer.add_scalar("loss/val", avg_metrics['loss'], self._global_val_all_cnt)
+            self._tb_writer.add_scalar("main_loss/val", avg_metrics['main_loss'], self._global_val_all_cnt)
+            self._tb_writer.add_scalar("sinkhorn_reg_loss/val", avg_metrics['sinkhorn_reg_loss'], self._global_val_all_cnt)
             self._tb_writer.add_scalar("acc/val", avg_metrics['acc'], self._global_val_all_cnt)
             self._tb_writer.add_scalar("mean_abs_err_anywhere/val", avg_metrics['mean_abs_err_anywhere'], self._global_val_all_cnt)
             self._tb_writer.add_scalar("mean_abs_err_surface/val", avg_metrics['mean_abs_err_surface'], self._global_val_all_cnt)
@@ -129,6 +139,8 @@ class SignalManager():
     def _calculate_metrics(self, batch_data):
         metrics = {
             'loss': batch_data['loss'],
+            'main_loss': batch_data['main_loss'],
+            'sinkhorn_reg_loss': batch_data['sinkhorn_reg_loss'],
             'acc': self._calculate_accuracy(batch_data['anywhere_occ_fcn_vals_pred'], batch_data['anywhere_occ_fcn_vals_target']),
             'mean_abs_err_anywhere': self._calculate_mean_abs_err(batch_data['anywhere_occ_fcn_vals_pred'], batch_data['anywhere_occ_fcn_vals_target']),
             'mean_abs_err_surface': self._calculate_mean_abs_err(batch_data['surface_occ_fcn_vals_pred'][batch_data['surface_pt_mask']], batch_data['surface_occ_fcn_vals_target'][batch_data['surface_pt_mask']]),

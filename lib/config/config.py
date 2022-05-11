@@ -111,6 +111,21 @@ def train():
     config.OCC_RAY_AE.N_BATCHES_TB_INTERVAL = 256
     # config.OCC_RAY_AE.N_BATCHES_LOG_INTERVAL = 1024
     config.OCC_RAY_AE.N_BATCHES_VIZ_INTERVAL = None # Just every epoch
+    config.OCC_RAY_AE.SINKHORN_REG = {'enabled': False}
+    # config.OCC_RAY_AE.SINKHORN_REG = {
+    #     'enabled': True,
+    #     # 'loss_coefficient': 1e0,
+    #     # 'loss_coefficient': 1e-1,
+    #     # 'loss_coefficient': 1e-2,
+    #     # 'loss_coefficient': 1e-3,
+    #     'loss_coefficient': 1e-4,
+    #     'max_n_pairs': 12, # For OCC_RAY_LATENT_DIM = 16: 16 choose 2 = 16! / (14! * 2!) = 120 is max.
+    #     # 'max_n_pairs': 32, # For OCC_RAY_LATENT_DIM = 16: 16 choose 2 = 16! / (14! * 2!) = 120 is max.
+    #     'epsilon': 0.1, # = Entropy parameter
+    #     'rho': 1., # = Unbalanced KL relaxation parameter
+    # }
+    if config.OCC_RAY_AE.SINKHORN_REG.enabled:
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
     config.OCC_RAY_AE.TRAIN.DATA = {}
     config.OCC_RAY_AE.VAL.DATA = {}
     config.OCC_RAY_AE.TRAIN.DATA.N_SAMPLES = 1024*64
