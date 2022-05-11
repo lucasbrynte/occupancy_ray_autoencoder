@@ -27,28 +27,28 @@ class OccRayEncoder(nn.Module):
         # CNN
         self.conv_layers = nn.ModuleList()
         if self.norm_config is not None:
-            self.conv_norm_layers = nn.ModuleList()
+            self.conv_bn_layers = nn.ModuleList()
         for in_ch, out_ch, ksize, stride in zip(cnn_channel_list[:-1], cnn_channel_list[1:], ksize_list, stride_list):
             self.conv_layers.append(nn.Conv1d(in_ch, out_ch, ksize, stride=stride, padding=0))
             if self.norm_config is not None:
                 if self.norm_config.METHOD == 'bn':
-                    self.conv_norm_layers.append(nn.BatchNorm1d(out_ch))
+                    self.conv_bn_layers.append(nn.BatchNorm1d(out_ch))
                 elif self.norm_config.METHOD == 'gn':
-                    self.conv_norm_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
+                    self.conv_bn_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
                 else:
                     assert False, 'Unknown normalization method: {}'.format(self.norm_config.METHOD)
 
         # FC head
         self.fc_layers = nn.ModuleList()
         if self.norm_config is not None:
-            self.fc_norm_layers = nn.ModuleList()
+            self.fc_bn_layers = nn.ModuleList()
         for j, (in_ch, out_ch) in enumerate(zip(fc_channel_list[:-1], fc_channel_list[1:])):
             self.fc_layers.append(nn.Linear(in_ch, out_ch))
             if self.norm_config is not None and j + 1 < len(fc_channel_list[:-1]):
                 if self.norm_config.METHOD == 'bn':
-                    self.fc_norm_layers.append(nn.BatchNorm1d(out_ch))
+                    self.fc_bn_layers.append(nn.BatchNorm1d(out_ch))
                 elif self.norm_config.METHOD == 'gn':
-                    self.fc_norm_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
+                    self.fc_bn_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
                 else:
                     assert False, 'Unknown normalization method: {}'.format(self.norm_config.METHOD)
 
@@ -60,7 +60,7 @@ class OccRayEncoder(nn.Module):
         for j, conv in enumerate(self.conv_layers):
             x = conv(x)
             x = nn.functional.relu(x)
-            x = self.conv_norm_layers[j](x)
+            x = self.conv_bn_layers[j](x)
             # BN after activation:
             # https://github.com/cvjena/cnn-models/issues/3#issuecomment-266782416
             # https://github.com/keras-team/keras/issues/1802#issuecomment-187966878
@@ -72,7 +72,7 @@ class OccRayEncoder(nn.Module):
             x = layer(x)
             if j + 1 < len(self.fc_layers):
                 x = nn.functional.relu(x)
-                x = self.fc_norm_layers[j](x)
+                x = self.fc_bn_layers[j](x)
 
         return x
 
@@ -88,14 +88,14 @@ class OccRayDecoder(nn.Module):
 
         self.fc_layers = nn.ModuleList()
         if self.norm_config is not None:
-            self.fc_norm_layers = nn.ModuleList()
+            self.fc_bn_layers = nn.ModuleList()
         for j, (in_ch, out_ch) in enumerate(zip(fc_channel_list[:-1], fc_channel_list[1:])):
             self.fc_layers.append(nn.Linear(in_ch, out_ch))
             if self.norm_config is not None and j + 1 < len(fc_channel_list[:-1]):
                 if self.norm_config.METHOD == 'bn':
-                    self.fc_norm_layers.append(nn.BatchNorm1d(out_ch))
+                    self.fc_bn_layers.append(nn.BatchNorm1d(out_ch))
                 elif self.norm_config.METHOD == 'gn':
-                    self.fc_norm_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
+                    self.fc_bn_layers.append(nn.GroupNorm(out_ch // self.norm_config.CHANNELS_PER_GROUP, out_ch))
                 else:
                     assert False, 'Unknown normalization method: {}'.format(self.norm_config.METHOD)
 
@@ -107,6 +107,6 @@ class OccRayDecoder(nn.Module):
             x = layer(x)
             if j + 1 < len(self.fc_layers):
                 x = nn.functional.relu(x)
-                x = self.fc_norm_layers[j](x)
+                x = self.fc_bn_layers[j](x)
 
         return x
