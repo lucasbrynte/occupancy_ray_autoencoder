@@ -11,8 +11,8 @@ def occ_ray_encoder_forward(
     occ_ray_encoder,
     batch_data,
 ):
-    bs = batch_data['occ_ray_rasterized'].shape[0]
-    z = occ_ray_encoder(batch_data['occ_ray_rasterized'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
+    bs = batch_data['occ_ray_observation'].shape[0]
+    z = occ_ray_encoder(batch_data['occ_ray_observation'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda(), batch_data['grid'].reshape((bs, 1, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)).cuda())
     return z
 
 def occ_ray_decoder_forward(

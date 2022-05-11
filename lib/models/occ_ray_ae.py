@@ -52,9 +52,9 @@ class OccRayEncoder(nn.Module):
                 else:
                     assert False, 'Unknown normalization method: {}'.format(self.norm_config.METHOD)
 
-    def forward(self, occ_ray_rasterized, grid):
-        bs = occ_ray_rasterized.shape[0]
-        x = torch.cat((occ_ray_rasterized, grid), dim=1)
+    def forward(self, occ_ray_observation, grid):
+        bs = occ_ray_observation.shape[0]
+        x = torch.cat((occ_ray_observation, grid), dim=1)
 
         # CNN
         for j, conv in enumerate(self.conv_layers):

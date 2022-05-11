@@ -77,6 +77,8 @@ class OccRayDataset(Dataset):
         return point_samples, occ_fcn_vals
 
     def __getitem__(self, sample_idx):
+        assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability'
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
         if self._reset_seed_on_epoch_start:
             if sample_idx == 0:
                 self._reset_seed()
@@ -84,7 +86,17 @@ class OccRayDataset(Dataset):
             else:
                 assert sample_idx == self._prev_sample_idx + 1, 'Previous sample idx: {}, current: {} != {}.'.format(self._prev_sample_idx, sample_idx, self._prev_sample_idx+1)
                 self._prev_sample_idx += 1
+
+        # Sample a binary occupancy function on an equidistant grid:
         occ_ray_rasterized, all_surface_pts = self._sample_rasterized_occ_ray()
+
+        if config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability':
+            # The binary rasterized ray is used as observation as-is.
+            occ_ray_observation = occ_ray_rasterized
+        else:
+            # As of yet, no other observation representations are implemented.
+            assert False
+
         first_gridpoint = 0.5 * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
         last_gridpoint = (config.OCC_RAY_AE.OCC_RAY_RESOLUTION - 0.5) * config.OCC_RAY_AE.RAY_RANGE / config.OCC_RAY_AE.OCC_RAY_RESOLUTION
         grid = np.linspace(first_gridpoint, last_gridpoint, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)
@@ -114,6 +126,7 @@ class OccRayDataset(Dataset):
 
         sample = {}
         sample['occ_ray_rasterized'] = torch.tensor(occ_ray_rasterized.astype(np.float32))
+        sample['occ_ray_observation'] = torch.tensor(occ_ray_observation.astype(np.float32))
         sample['grid'] = torch.tensor(grid.astype(np.float32))
         # NOTE: The grid above is constant!
         if self._anywhere_samples:

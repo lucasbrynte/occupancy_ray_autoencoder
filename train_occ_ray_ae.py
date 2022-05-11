@@ -102,6 +102,7 @@ def main():
             signal_manager.record_train_batch(
                 {
                     'n_surface_occ_fcn_samples': batch_data['n_surface_occ_fcn_samples'].numpy(),
+                    # 'occ_ray_observation': batch_data['occ_ray_observation'].numpy(),
                     'occ_ray_rasterized': batch_data['occ_ray_rasterized'].numpy(),
                     'anywhere_pts': batch_data['anywhere_pts'].numpy(),
                     # 'anywhere_pt_mask': anywhere_pt_mask.numpy(),
