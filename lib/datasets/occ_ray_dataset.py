@@ -63,13 +63,15 @@ class OccRayDataset(Dataset):
         return occ_ray_rasterized, locs
 
     def _generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
-        eps = 1e-6
+        # eps = 1e-6 # This is large enough to distinguish OCC_RAY_RESOLUTION - eps from OCC_RAY_RESOLUTION, provided we use double-precision. However! For single-precisino it might not.
+        eps = 1e-3
         point_samples = self._random_generator.uniform(low=0, high=config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, size=(n_samples,))
         occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
         return point_samples, occ_fcn_vals
 
     def _generate_dense_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
-        eps = 1e-6
+        # eps = 1e-6 # This is large enough to distinguish OCC_RAY_RESOLUTION - eps from OCC_RAY_RESOLUTION, provided we use double-precision. However! For single-precisino it might not.
+        eps = 1e-3
         point_samples = np.linspace(0, config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, n_samples)
         occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
         return point_samples, occ_fcn_vals
