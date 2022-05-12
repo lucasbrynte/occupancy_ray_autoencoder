@@ -151,19 +151,31 @@ class SignalManager():
 
 
     def _calculate_accuracy(self, occ_fcn_vals_pred, occ_fcn_vals_target):
-        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
-        border_val = 0.5
-        hard_predictions = occ_fcn_vals_pred >= border_val
-        assert np.all(np.isclose(np.abs(occ_fcn_vals_target - border_val), border_val))
-        accuracy = np.mean(hard_predictions == occ_fcn_vals_target.astype(bool))
+        if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
+            border_val = 0.5
+            hard_predictions = occ_fcn_vals_pred >= border_val
+            assert np.all(np.isclose(np.abs(occ_fcn_vals_target - border_val), border_val))
+            # hard_targets = occ_fcn_vals_target >= border_val
+            hard_targets = occ_fcn_vals_target.astype(bool)
+        elif config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'SDF':
+            border_val = 0.0
+            hard_predictions = occ_fcn_vals_pred >= border_val
+            hard_targets = occ_fcn_vals_target >= border_val
+        else:
+            assert False
+
+        accuracy = np.mean(hard_predictions == hard_targets.astype(bool))
+
         return accuracy
 
     def _calculate_mean_abs_err(self, occ_fcn_vals_pred, occ_fcn_vals_target):
-        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        # assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
         mean_abs_err = np.mean(np.abs(occ_fcn_vals_pred - occ_fcn_vals_target))
         return mean_abs_err
 
     def _calculate_std_abs_err(self, occ_fcn_vals_pred, occ_fcn_vals_target):
-        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        # assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
         std_abs_err = np.std(np.abs(occ_fcn_vals_pred - occ_fcn_vals_target))
         return std_abs_err

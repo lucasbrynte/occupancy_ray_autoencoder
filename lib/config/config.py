@@ -53,7 +53,9 @@ def occ_ray_ae(**kwargs):
     config.OCC_RAY_AE.RAY_RANGE = 1
     config.OCC_RAY_AE.OCC_RAY_LATENT_DIM = 16
     config.OCC_RAY_AE.OBSERVATION_REPRESENTATION = 'occupancy_probability'
+    # config.OCC_RAY_AE.OBSERVATION_REPRESENTATION = 'SDF'
     config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION = 'occupancy_probability'
+    # config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION = 'SDF'
     config.OCC_RAY_AE.ARCH = {
         'ENCODER': {
             'CNN_CHANNEL_LIST': [2, 1024],
@@ -69,8 +71,10 @@ def occ_ray_ae(**kwargs):
         'NORMALIZATION': {'METHOD': 'gn', 'CHANNELS_PER_GROUP': 64},
     }
 
-    assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability'
-    assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+    # assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability'
+    # assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+    assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION in ['occupancy_probability', 'SDF']
+    assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
 
     check_old_new_consistency('config.OCC_RAY_AE.RAY_RANGE')
     check_old_new_consistency('config.OCC_RAY_AE.OCC_RAY_LATENT_DIM')
@@ -162,6 +166,11 @@ def train():
     config.OCC_RAY_AE.N_OCC_FCN_SAMPLES = config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES + config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES
     config.OCC_RAY_AE.RECONSTRUCTION_LOSS = 'mse'
     # config.OCC_RAY_AE.RECONSTRUCTION_LOSS = 'bce'
+
+    if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
+        assert config.OCC_RAY_AE.RECONSTRUCTION_LOSS in ['mse', 'bce']
+    elif config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'SDF':
+        assert config.OCC_RAY_AE.RECONSTRUCTION_LOSS == 'mse'
 
     train_occ_ray_ae.main()
 

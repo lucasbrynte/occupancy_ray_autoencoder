@@ -62,23 +62,107 @@ class OccRayDataset(Dataset):
             assert locs[0] >= 1
         return occ_ray_rasterized, locs
 
-    def _generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
+    @property
+    def grid(self):
+        # Define a grid where each pixel stores its own location.
+        # The coordinate system coincides
+        grid = np.arange(config.OCC_RAY_AE.OCC_RAY_RESOLUTION).astype(np.float64) + 0.5
+        assert grid.shape == (config.OCC_RAY_AE.OCC_RAY_RESOLUTION,)
+        assert np.isclose(grid[0], 0.5)
+        assert np.isclose(grid[-1], config.OCC_RAY_AE.OCC_RAY_RESOLUTION - 0.5)
+        return grid
+
+    def _occ_ray_to_sdf(self, occ_ray_rasterized, all_surface_pts):
+        assert occ_ray_rasterized.dtype == np.bool and occ_ray_rasterized.shape == (config.OCC_RAY_AE.OCC_RAY_RESOLUTION,)
+        assert all_surface_pts.dtype == np.int64 and len(all_surface_pts.shape) == 1
+
+        # This might be efficient due to the vectorized oneliner, but also might not due to being relatively heavy in memory, and maybe also in terms of computation.
+        # All grid point <-> surface point distances are computed.
+        occ_ray_sdf_vals = self._calc_sdf_at_samples_for_occ_ray(occ_ray_rasterized, all_surface_pts, self.grid)
+
+        return occ_ray_sdf_vals
+
+    def _calc_sdf_at_samples_for_occ_ray(self, occ_ray_rasterized, all_surface_pts, point_samples):
+        assert occ_ray_rasterized.dtype == np.bool and occ_ray_rasterized.shape == (config.OCC_RAY_AE.OCC_RAY_RESOLUTION,)
+        assert len(all_surface_pts.shape) == 1
+        assert len(point_samples.shape) == 1
+
+        all_surface_pts = all_surface_pts.astype(np.float64)
+        point_samples = point_samples.astype(np.float64)
+
+        assert np.all(point_samples >= 0)
+        assert np.all(point_samples <= config.OCC_RAY_AE.OCC_RAY_RESOLUTION)
+        eps = 1e-3
+        point_samples[np.isclose(point_samples, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)] = config.OCC_RAY_AE.OCC_RAY_RESOLUTION - eps
+        assert np.all(point_samples < config.OCC_RAY_AE.OCC_RAY_RESOLUTION) # Strict inequality important in order to use np.floor later on and end up with proper pixel / bin indices.
+
+        # The surface points represent the index of the first "pixel" of each new section of occupied / free space.
+        # Each section has a start and and end point, except the initial / final sections, for which only the end point / start point, respectively, is given.
+        # In addition to the given surface points, one may regard the boundary points as implied additional surface points, at "pixels" 0 and config.OCC_RAY_AE.OCC_RAY_RESOLUTION, the latter being out of bounds.
+        # Alternatively, one may see the initial & final sections as being open / infinite towards the boundaries.
+        # We will take the former perspective when defining the SDF values, such that the boundary sections are always "closed".
+        # The second approach suffers from the SDF not being defined (or perhaps being infinite) if there are no surface points, which happens if the whole space is either empty or fully occupied.
+
+        assert np.all(all_surface_pts >= 1)
+        assert np.all(all_surface_pts < config.OCC_RAY_AE.OCC_RAY_RESOLUTION)
+        # This more explicit approach will fail if there are no surface points:
+        # assert all_surface_pts[0] >= 1
+        # assert all_surface_pts[-1] < config.OCC_RAY_AE.OCC_RAY_RESOLUTION
+
+        # Augment the surface points to always include the boundaries as well.
+        all_surface_pts = np.concatenate((np.array([0]), all_surface_pts, np.array([config.OCC_RAY_AE.OCC_RAY_RESOLUTION])), axis=0)
+        assert len(all_surface_pts.shape) == 1
+
+        # First compute absolute distances to the respective closest surface points
+        # All grid point <-> surface point distances are computed, and the minimum ones are selected.
+        occ_ray_sdf_vals = np.min(np.abs(point_samples[:, None] - all_surface_pts[None, :]), axis=1)
+
+        # Sample binary occupancy function at the point samples.
+        occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+
+        # Apply a sign change at all exterior points, in which case we want negative distances.
+        occ_ray_sdf_vals[~occ_fcn_vals] *= -1.0
+        # occ_ray_sdf_vals[~occ_ray_rasterized] *= -1.0
+
+        return occ_ray_sdf_vals
+
+    def _generate_anywhere_occ_fcn_samples(self, occ_ray_rasterized, all_surface_pts, n_samples):
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
+
         # eps = 1e-6 # This is large enough to distinguish OCC_RAY_RESOLUTION - eps from OCC_RAY_RESOLUTION, provided we use double-precision. However! For single-precisino it might not.
         eps = 1e-3
         point_samples = self._random_generator.uniform(low=0, high=config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, size=(n_samples,))
-        occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+
+        if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
+            occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+        elif config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'SDF':
+            occ_fcn_vals = self._calc_sdf_at_samples_for_occ_ray(occ_ray_rasterized, all_surface_pts, point_samples)
+        else:
+            assert False
+
         return point_samples, occ_fcn_vals
 
-    def _generate_dense_occ_fcn_samples(self, occ_ray_rasterized, n_samples):
+    def _generate_dense_occ_fcn_samples(self, occ_ray_rasterized, all_surface_pts, n_samples):
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
+
         # eps = 1e-6 # This is large enough to distinguish OCC_RAY_RESOLUTION - eps from OCC_RAY_RESOLUTION, provided we use double-precision. However! For single-precisino it might not.
         eps = 1e-3
         point_samples = np.linspace(0, config.OCC_RAY_AE.OCC_RAY_RESOLUTION-eps, n_samples)
-        occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+
+        if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
+            occ_fcn_vals = occ_ray_rasterized[np.floor(point_samples).astype(np.int64)]
+        elif config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'SDF':
+            occ_fcn_vals = self._calc_sdf_at_samples_for_occ_ray(occ_ray_rasterized, all_surface_pts, point_samples)
+        else:
+            assert False
+
         return point_samples, occ_fcn_vals
 
     def __getitem__(self, sample_idx):
-        assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability'
-        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        # assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability'
+        # assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability'
+        assert config.OCC_RAY_AE.OBSERVATION_REPRESENTATION in ['occupancy_probability', 'SDF']
+        assert config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION in ['occupancy_probability', 'SDF']
         if self._reset_seed_on_epoch_start:
             if sample_idx == 0:
                 self._reset_seed()
@@ -93,6 +177,9 @@ class OccRayDataset(Dataset):
         if config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'occupancy_probability':
             # The binary rasterized ray is used as observation as-is.
             occ_ray_observation = occ_ray_rasterized
+        elif config.OCC_RAY_AE.OBSERVATION_REPRESENTATION == 'SDF':
+            sdf_rasterized = self._occ_ray_to_sdf(occ_ray_rasterized, all_surface_pts)
+            occ_ray_observation = sdf_rasterized
         else:
             # As of yet, no other observation representations are implemented.
             assert False
@@ -102,7 +189,7 @@ class OccRayDataset(Dataset):
         grid = np.linspace(first_gridpoint, last_gridpoint, config.OCC_RAY_AE.OCC_RAY_RESOLUTION)
 
         if self._anywhere_samples:
-            anywhere_pts, anywhere_occ_fcn_vals = self._generate_anywhere_occ_fcn_samples(occ_ray_rasterized, config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES)
+            anywhere_pts, anywhere_occ_fcn_vals = self._generate_anywhere_occ_fcn_samples(occ_ray_rasterized, all_surface_pts, config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES)
             anywhere_pt_weights = np.ones((config.OCC_RAY_AE.N_ANYWHERE_OCC_FCN_SAMPLES,))
 
         if self._surface_samples:
@@ -116,12 +203,14 @@ class OccRayDataset(Dataset):
                 # surface_pt_weights[:n_surface_occ_fcn_samples] = 1.0 * config.OCC_RAY_AE.MAX_N_SURFACE_OCC_FCN_SAMPLES / n_surface_occ_fcn_samples
             if config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'occupancy_probability':
                 border_val = 0.5
+            elif config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION == 'SDF':
+                border_val = 0.0
             else:
                 assert False
             surface_occ_fcn_vals = border_val * np.ones_like(surface_pts)
 
         if self._dense_samples:
-            dense_pts, dense_occ_fcn_vals = self._generate_dense_occ_fcn_samples(occ_ray_rasterized, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)
+            dense_pts, dense_occ_fcn_vals = self._generate_dense_occ_fcn_samples(occ_ray_rasterized, all_surface_pts, config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES)
             # dense_pt_weights = np.ones((config.OCC_RAY_AE.N_DENSE_OCC_FCN_SAMPLES,))
 
         sample = {}
