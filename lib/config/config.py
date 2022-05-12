@@ -78,19 +78,23 @@ def occ_ray_ae(**kwargs):
 
     check_old_new_consistency('config.OCC_RAY_AE.RAY_RANGE')
     check_old_new_consistency('config.OCC_RAY_AE.OCC_RAY_LATENT_DIM')
-    check_old_new_consistency('config.OCC_RAY_AE.OBSERVATION_REPRESENTATION')
-    check_old_new_consistency('config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION')
+    check_old_new_consistency('config.OCC_RAY_AE.OBSERVATION_REPRESENTATION', legacy_value='occupancy_probability')
+    check_old_new_consistency('config.OCC_RAY_AE.RECONSTRUCTION_REPRESENTATION', legacy_value='occupancy_probability')
     check_old_new_consistency('config.OCC_RAY_AE.ARCH')
     check_old_new_consistency('config.OCC_RAY_AE.OCC_RAY_RESOLUTION')
 
-def check_old_new_consistency(new_name):
+def check_old_new_consistency(new_name, legacy_value=None):
     tmp = new_name.split('.')
     old_name = '.'.join([tmp[0]] + ['OLD'] + tmp[1:])
     new_val = eval(new_name)
     try:
         old_val = eval(old_name)
     except KeyError:
-        log().warning('Old configuration not found: {}'.format(old_name))
+        if legacy_value is not None:
+            log().info('Old configuration for {} not found, resorting to legacy value: {}'.format(old_name, legacy_value))
+        else:
+            log().warning('Old configuration for {} not found, and no legacy value given. Overriding with new value: {}'.format(old_name, new_val))
+        # log().warning('Old configuration not found: {}'.format(old_name))
         return
     complex_structure = isinstance(old_val, (dict, list))
     if new_val != old_val:
